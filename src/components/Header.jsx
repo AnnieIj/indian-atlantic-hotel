@@ -37,8 +37,10 @@ const Header = () => {
     }
   };
 
+  const isNotHome = location.pathname !== '/';
+
   return (
-    <header className={`header ${isScrolled ? 'scrolled glass-panel' : ''}`}>
+    <header className={`header ${isScrolled || isNotHome ? 'scrolled glass-panel' : ''} ${isNotHome ? 'is-not-home' : ''}`}>
       <div className="container header-container">
         <Link 
           to="/" 

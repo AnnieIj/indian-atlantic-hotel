@@ -10,9 +10,12 @@
   color: var(--color-text-light);
 }
 
-.header.scrolled {
-  padding: 1rem 0;
+.header.scrolled,
+.header.is-not-home {
+  padding: 0.85rem 0;
   color: var(--color-primary-navy);
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .header-container {
