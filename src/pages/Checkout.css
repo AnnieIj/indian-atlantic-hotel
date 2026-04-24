@@ -1,0 +1,92 @@
+.checkout-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 3rem;
+}
+
+.checkout-form {
+  padding: 2rem;
+  background: var(--color-background-white);
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-group-light {
+  margin-bottom: 1.5rem;
+}
+
+.form-group-light label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-dark);
+}
+
+.form-group-light input {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  font-family: var(--font-primary);
+}
+
+.checkout-summary {
+  padding: 2rem;
+  border-radius: 8px;
+  color: var(--color-text-light);
+  height: fit-content;
+}
+
+.checkout-summary h3 {
+  color: var(--color-primary-gold);
+}
+
+.summary-room {
+  display: flex;
+  gap: 1rem;
+}
+
+.summary-room img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.date-box {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.date-box .label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--color-primary-gold);
+}
+
+.date-box .value {
+  font-weight: 600;
+}
+
+.divider-sm {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 1rem 0;
+}
+
+@media (max-width: 768px) {
+  .checkout-container {
+    grid-template-columns: 1fr;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

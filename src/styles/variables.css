@@ -1,0 +1,24 @@
+:root {
+  --color-primary-navy: #0F1A2A;
+  --color-primary-navy-light: #1A2B42;
+  --color-primary-gold: #D4AF37;
+  --color-primary-gold-hover: #c49d26;
+  --color-background-light: #F8FAFC;
+  --color-background-white: #FFFFFF;
+  --color-text-dark: #1E293B;
+  --color-text-light: #F8FAFC;
+  --color-text-muted: #64748B;
+  
+  --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Playfair Display', serif;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-bg-dark: rgba(15, 26, 42, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-blur: blur(12px);
+}

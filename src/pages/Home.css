@@ -1,0 +1,346 @@
+/* Hero Section */
+.hero {
+  position: relative;
+  height: 100vh;
+  min-height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-light);
+  overflow: hidden;
+  background-color: var(--color-primary-navy);
+}
+
+.hero-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=1920");
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(4, 21, 45, 0.5); /* Navy tint for luxury feel */
+  z-index: 1;
+}
+
+.hero-content {
+  text-align: center;
+  max-width: 800px;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  padding-top: 4rem;
+}
+
+.hero-text h1 {
+  font-size: 3.5rem;
+  color: var(--color-text-light);
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+.hero-text p {
+  font-size: 1.25rem;
+  opacity: 0.9;
+}
+
+/* Search Bar */
+.search-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 8px;
+  align-items: flex-end;
+}
+
+.search-group {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.search-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-light);
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--color-background-white);
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  color: var(--color-text-dark);
+}
+
+.input-wrapper input,
+.input-wrapper select {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-family: var(--font-primary);
+  font-size: 1rem;
+  color: var(--color-text-dark);
+}
+
+.search-btn {
+  height: 48px;
+  padding: 0 2rem;
+}
+
+/* General Sections */
+.section {
+  padding: 6rem 0;
+}
+
+.bg-light {
+  background-color: var(--color-background-white);
+}
+
+.divider {
+  width: 60px;
+  height: 3px;
+  background-color: var(--color-primary-gold);
+  margin: 1rem auto;
+}
+
+/* About Section */
+.about-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.about-text .subtitle {
+  color: var(--color-primary-gold);
+  font-weight: 600;
+  margin-bottom: 1rem;
+  font-size: 1.125rem;
+}
+
+.about-text p {
+  color: var(--color-text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.about-image img {
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Rooms Grid */
+.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.room-card {
+  background: var(--color-background-light);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.3s ease;
+}
+
+.room-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.room-img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.room-info {
+  padding: 1.5rem;
+}
+
+.room-info h3 {
+  font-size: 1.25rem;
+}
+
+.room-info .price {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--color-primary-navy);
+  margin-bottom: 1rem;
+}
+
+.room-info .price span {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.room-info .desc {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Features Grid */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  text-align: center;
+}
+
+.feature-item {
+  padding: 2rem;
+  background: var(--color-background-white);
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.feature-icon {
+  color: var(--color-primary-gold);
+}
+
+/* Testimonials Section */
+.testimonials-section {
+  background-image: url("https://images.unsplash.com/photo-1551882547-ff40c0d12c56?auto=format&fit=crop&q=80&w=1920");
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+  position: relative;
+}
+
+.testimonials-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(4, 21, 45, 0.85); /* Dark overlay */
+  z-index: 0;
+}
+
+.testimonials-section .container {
+  position: relative;
+  z-index: 1;
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.testimonial-card {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.testimonial-card .stars {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.testimonial-text {
+  font-style: italic;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--color-text-light);
+  flex-grow: 1;
+}
+
+.testimonial-author h4 {
+  color: var(--color-primary-gold);
+  margin-bottom: 0.25rem;
+}
+
+.testimonial-author span {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+/* Custom Date Picker Styles */
+.custom-datepicker {
+  background: transparent !important;
+  border: none !important;
+  color: var(--color-text-dark) !important;
+  outline: none !important;
+  font-family: var(--font-primary);
+  font-size: 1rem;
+  width: 100%;
+  cursor: pointer;
+}
+
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker {
+  font-family: var(--font-primary) !important;
+  border: 1px solid var(--color-primary-gold) !important;
+  border-radius: 8px !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.react-datepicker__header {
+  background-color: var(--color-primary-navy) !important;
+  border-bottom: 1px solid var(--color-primary-gold) !important;
+}
+
+.react-datepicker__current-month, .react-datepicker-time__header, .react-datepicker-year-header {
+  color: var(--color-text-light) !important;
+}
+
+.react-datepicker__day-name {
+  color: var(--color-text-muted) !important;
+}
+
+.react-datepicker__day--selected, .react-datepicker__day--in-selecting-range, .react-datepicker__day--in-range,
+.react-datepicker__month-text--selected, .react-datepicker__month-text--in-selecting-range, .react-datepicker__month-text--in-range,
+.react-datepicker__quarter-text--selected, .react-datepicker__quarter-text--in-selecting-range, .react-datepicker__quarter-text--in-range,
+.react-datepicker__year-text--selected, .react-datepicker__year-text--in-selecting-range, .react-datepicker__year-text--in-range {
+  background-color: var(--color-primary-gold) !important;
+  color: var(--color-primary-navy) !important;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .hero-text h1 {
+    font-size: 2.5rem;
+  }
+  .about-section {
+    grid-template-columns: 1fr;
+  }
+}
