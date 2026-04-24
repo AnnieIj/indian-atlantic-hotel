@@ -18,7 +18,7 @@
 .admin-layout {
   display: flex;
   min-height: 100vh;
-  background-color: #f1f5f9;
+  background-color: var(--color-background-light);
 }
 
 .admin-sidebar {
@@ -88,7 +88,7 @@
 .admin-header {
   height: 64px;
   background-color: var(--color-background-white);
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -186,16 +186,16 @@
 .admin-table th, .admin-table td {
   padding: 1rem 1.5rem;
   text-align: left;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .admin-table th {
-  background-color: #f8fafc;
+  background-color: var(--color-background-light);
   font-weight: 600;
   color: var(--color-text-muted);
   font-size: 0.875rem;
 }
 
 .admin-table tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: var(--color-background-light);
 }

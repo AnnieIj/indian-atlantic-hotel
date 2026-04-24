@@ -157,11 +157,12 @@
 }
 
 .room-card {
-  background: var(--color-background-light);
-  border-radius: 8px;
+  background: var(--color-background-white);
+  border-radius: 12px;
   overflow: hidden;
   box-shadow: var(--shadow-md);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--glass-border);
 }
 
 .room-card:hover {
@@ -186,7 +187,7 @@
 .room-info .price {
   font-weight: 700;
   font-size: 1.25rem;
-  color: var(--color-primary-navy);
+  color: var(--color-text-dark);
   margin-bottom: 1rem;
 }
 

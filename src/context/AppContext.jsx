@@ -9,6 +9,16 @@ export const AppProvider = ({ children }) => {
   const [payments, setPayments] = useState([]);
   const [users, setUsers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const [theme, setTheme] = useState(localStorage.getItem('iah_theme') || 'light');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('iah_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
 
   useEffect(() => {
     // Load from local storage or initialize with mock data
@@ -143,7 +153,8 @@ export const AppProvider = ({ children }) => {
       bookings, setBookings, updateBookingStatus, createBooking, checkAvailability,
       payments, setPayments,
       users, setUsers,
-      currentUser, login, logout
+      currentUser, login, logout,
+      theme, toggleTheme
     }}>
       {children}
     </AppContext.Provider>

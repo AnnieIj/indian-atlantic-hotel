@@ -1,24 +1,49 @@
 :root {
+  /* Common Colors */
   --color-primary-navy: #0F1A2A;
   --color-primary-navy-light: #1A2B42;
   --color-primary-gold: #D4AF37;
   --color-primary-gold-hover: #c49d26;
-  --color-background-light: #F8FAFC;
+  
+  /* Light Theme (Day Mode - Softened) */
+  --color-background-light: #f3f4f6;
   --color-background-white: #FFFFFF;
-  --color-text-dark: #1E293B;
+  --color-text-dark: #334155;
   --color-text-light: #F8FAFC;
   --color-text-muted: #64748B;
+  
+  --badge-success-bg: #ecfdf5; --badge-success-text: #065f46;
+  --badge-warning-bg: #fffbeb; --badge-warning-text: #92400e;
+  --badge-danger-bg: #fef2f2; --badge-danger-text: #991b1b;
+  --badge-info-bg: #f0f9ff; --badge-info-text: #075985;
+  
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-bg-dark: rgba(15, 26, 42, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.05);
   
   --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
   --font-heading: 'Playfair Display', serif;
 
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.03), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.03), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+  --shadow-glass: 0 10px 30px rgba(0, 0, 0, 0.04);
+  --glass-blur: blur(16px);
+}
+
+[data-theme='dark'] {
+  --color-background-light: #0a0f18;
+  --color-background-white: #0F1A2A;
+  --color-text-dark: #F8FAFC;
+  --color-text-muted: #94A3B8;
+  --glass-bg: rgba(15, 26, 42, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.1);
   
-  --glass-bg: rgba(255, 255, 255, 0.45);
-  --glass-bg-dark: rgba(15, 26, 42, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.18);
-  --glass-blur: blur(12px);
+  --badge-success-bg: #064e3b; --badge-success-text: #6ee7b7;
+  --badge-warning-bg: #78350f; --badge-warning-text: #fde047;
+  --badge-danger-bg: #7f1d1d; --badge-danger-text: #fca5a5;
+  --badge-info-bg: #0c4a6e; --badge-info-text: #7dd3fc;
+  
+  --shadow-md: 0 10px 30px rgba(0,0,0,0.3);
+  --shadow-lg: 0 20px 40px rgba(0,0,0,0.4);
 }

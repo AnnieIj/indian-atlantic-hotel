@@ -76,6 +76,11 @@
   font-size: 1.5rem;
 }
 
+.theme-toggle:hover {
+  color: var(--color-primary-gold);
+  transform: scale(1.1);
+}
+
 @media (max-width: 768px) {
   .nav {
     position: fixed;

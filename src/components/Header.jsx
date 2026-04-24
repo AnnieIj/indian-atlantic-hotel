@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Sun, Moon } from 'lucide-react';
+import { AppContext } from '../context/AppContext';
 import './Header.css';
 
 const Header = () => {
+  const { theme, toggleTheme } = useContext(AppContext);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
@@ -70,7 +72,17 @@ const Header = () => {
           <Link to="/rooms" className={location.pathname === '/rooms' ? 'active' : ''} onClick={() => setIsMenuOpen(false)}>Rooms</Link>
           <a href="#about" onClick={(e) => scrollToSection(e, 'about')}>About</a>
           <a href="#contact" onClick={(e) => scrollToSection(e, 'contact')}>Contact</a>
-          <Link to="/rooms" className="btn btn-primary" onClick={() => setIsMenuOpen(false)}>Book Now</Link>
+          <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+            <button 
+              onClick={toggleTheme} 
+              className="theme-toggle"
+              aria-label="Toggle Theme"
+              style={{background: 'none', color: 'inherit', display: 'flex', alignItems: 'center'}}
+            >
+              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+            </button>
+            <Link to="/rooms" className="btn btn-primary" onClick={() => setIsMenuOpen(false)}>Book Now</Link>
+          </div>
         </nav>
 
         <button className="mobile-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
