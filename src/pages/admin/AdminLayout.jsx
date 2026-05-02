@@ -22,7 +22,9 @@ const AdminLayout = () => {
     <div className="admin-layout">
       <aside className="admin-sidebar">
         <div className="sidebar-header">
-          <h2 style={{color: 'var(--color-primary-gold)', fontFamily: 'var(--font-heading)', fontSize: '1.25rem'}}>Indian Atlantic Hotel Admin</h2>
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <img src="/logo.png" alt="Indian Atlantic Hotel" className="admin-logo-img" style={{ maxWidth: '100%', height: 'auto', display: 'block', margin: '0 auto' }} />
+          </Link>
         </div>
         
         <nav className="sidebar-nav">

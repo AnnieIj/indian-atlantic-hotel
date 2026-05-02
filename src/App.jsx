@@ -14,11 +14,13 @@ import AdminBookings from './pages/admin/AdminBookings';
 import AdminRooms from './pages/admin/AdminRooms';
 import AdminPayments from './pages/admin/AdminPayments';
 import WhatsAppWidget from './components/WhatsAppWidget';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   return (
     <AppProvider>
       <Router>
+        <ScrollToTop />
         <Routes>
           {/* Main Site Routes with Header & Footer */}
           <Route element={<MainLayout />}>

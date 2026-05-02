@@ -25,20 +25,19 @@
 }
 
 .logo {
-  font-family: var(--font-heading);
-  font-size: 1.5rem;
-  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
 }
 
-.logo-icon {
-  background: var(--color-primary-gold);
-  color: var(--color-primary-navy);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 1rem;
+.logo-img {
+  height: 45px;
+  width: auto;
+  transition: height 0.3s ease;
+}
+
+.header.scrolled .logo-img,
+.header.is-not-home .logo-img {
+  height: 35px;
 }
 
 .nav {
@@ -82,6 +81,10 @@
 }
 
 @media (max-width: 768px) {
+  .logo-img {
+    height: 30px;
+  }
+
   .nav {
     position: fixed;
     top: 0;
@@ -90,9 +93,10 @@
     height: 100vh;
     background: var(--color-primary-navy);
     flex-direction: column;
-    padding-top: 6rem;
-    transition: right 0.3s ease;
-    box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+    padding-top: 8rem;
+    gap: 2.5rem;
+    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.3);
   }
 
   .nav.open {
@@ -101,10 +105,18 @@
   
   .nav a {
     color: var(--color-text-light) !important;
+    font-size: 1.25rem;
+    letter-spacing: 0.1rem;
   }
 
   .mobile-toggle {
     display: block;
     z-index: 1001;
+    padding: 0.5rem;
+    margin-right: -0.5rem;
+  }
+
+  .header-container {
+    padding: 0 1rem;
   }
 }

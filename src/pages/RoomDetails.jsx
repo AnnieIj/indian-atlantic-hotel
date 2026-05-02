@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { Users, CheckCircle, XCircle } from 'lucide-react';
+import { Users, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
 import './RoomDetails.css';
 
 const RoomDetails = () => {
@@ -40,8 +40,23 @@ const RoomDetails = () => {
 
   return (
     <main className="room-details bg-light">
+      <div className="container breadcrumb-container">
+        <div className="breadcrumb">
+          <Link to="/">Home</Link> <span>/</span> 
+          <Link to="/rooms">Rooms</Link> <span>/</span> 
+          <span className="current">{room.name}</span>
+        </div>
+      </div>
+
       <div className="hero-small" style={{backgroundImage: `url(${room.image})`}}>
         <div className="hero-overlay"></div>
+        <button 
+          onClick={() => navigate('/rooms')} 
+          className="floating-back-btn"
+          aria-label="Back to rooms"
+        >
+          <ArrowLeft size={24} />
+        </button>
         <div className="container hero-content-small">
           <h1>{room.name}</h1>
         </div>

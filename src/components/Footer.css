@@ -20,8 +20,13 @@
 }
 
 .footer-logo {
-  color: var(--color-text-light);
-  margin-bottom: 1rem;
+  display: inline-block;
+  margin-bottom: 1.5rem;
+}
+
+.footer-logo .logo-img {
+  height: 60px;
+  width: auto;
 }
 
 .footer-desc {

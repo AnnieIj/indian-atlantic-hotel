@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { generateRooms, mockUsers, mockBookings } from '../data/mockData';
+import { generateRooms, mockUsers, mockBookings, mockTestimonials } from '../data/mockData';
 
 export const AppContext = createContext();
 
@@ -8,6 +8,7 @@ export const AppProvider = ({ children }) => {
   const [bookings, setBookings] = useState([]);
   const [payments, setPayments] = useState([]);
   const [users, setUsers] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [theme, setTheme] = useState(localStorage.getItem('iah_theme') || 'light');
 
@@ -49,6 +50,13 @@ export const AppProvider = ({ children }) => {
       setUsers(mockUsers);
     }
     
+    const localTestimonials = localStorage.getItem('iah_testimonials');
+    if (localTestimonials) {
+      setTestimonials(JSON.parse(localTestimonials));
+    } else {
+      setTestimonials(mockTestimonials);
+    }
+    
     const loggedInUser = localStorage.getItem('iah_currentUser');
     if (loggedInUser) setCurrentUser(JSON.parse(loggedInUser));
   }, []);
@@ -69,6 +77,10 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     if (users.length > 0) localStorage.setItem('iah_users', JSON.stringify(users));
   }, [users]);
+
+  useEffect(() => {
+    if (testimonials.length > 0) localStorage.setItem('iah_testimonials', JSON.stringify(testimonials));
+  }, [testimonials]);
 
   useEffect(() => {
     if (currentUser) {
@@ -164,16 +176,26 @@ export const AppProvider = ({ children }) => {
     setRooms(rooms.map(r => r.id === id ? { ...r, ...data } : r));
   };
 
+  const addTestimonial = (testimonial) => {
+    const newTestimonial = {
+      ...testimonial,
+      id: Date.now()
+    };
+    setTestimonials(prev => [newTestimonial, ...prev]);
+    return { success: true };
+  };
+
   return (
     <AppContext.Provider value={{
       rooms, setRooms, updateRoom,
       bookings, setBookings, updateBookingStatus, createBooking, checkAvailability,
       payments, setPayments,
       users, setUsers,
+      testimonials, addTestimonial,
       currentUser, login, logout,
       theme, toggleTheme
     }}>
       {children}
     </AppContext.Provider>
   );
-};
+};;

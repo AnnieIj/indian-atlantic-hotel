@@ -25,8 +25,8 @@ const AdminLogin = () => {
     <div className="admin-login-page">
       <div className="login-card glass-panel-dark">
         <div className="text-center mb-6">
-          <Lock size={40} className="text-gold mx-auto mb-2" />
-          <h2 style={{color: 'var(--color-text-light)'}}>Admin Portal</h2>
+          <img src="/logo.png" alt="Indian Atlantic Hotel" className="login-logo-img mx-auto mb-4" style={{ maxWidth: '180px', height: 'auto' }} />
+          <h2 style={{color: 'var(--color-text-light)', fontSize: '1.5rem'}}>Admin Portal</h2>
         </div>
         
         {error && <div className="error-msg mb-4" style={{color: '#fca5a5', textAlign: 'center'}}>{error}</div>}

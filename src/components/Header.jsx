@@ -53,7 +53,7 @@ const Header = () => {
             }
           }}
         >
-          Indian Atlantic Hotel
+          <img src="/logo.png" alt="Indian Atlantic Hotel" className="logo-img" />
         </Link>
         
         <nav className={`nav ${isMenuOpen ? 'open' : ''}`}>

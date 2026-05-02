@@ -25,8 +25,7 @@ const Footer = () => {
       <div className="container footer-content">
         <div className="footer-col">
           <Link to="/" className="logo footer-logo">
-            <span className="logo-icon">Indian Atlantic Hotel</span>
-            Indian Atlantic Hotel
+            <img src="/logo.png" alt="Indian Atlantic Hotel" className="logo-img" />
           </Link>
           <p className="footer-desc">
             Luxury & Comfort in the Heart of Agbor. Experience exceptional hospitality tailored to your needs.

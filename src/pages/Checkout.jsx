@@ -81,6 +81,7 @@ const Checkout = () => {
     <main className="checkout-page bg-light pt-32 pb-12">
       <div className="container checkout-container">
         <div className="checkout-form glass-panel">
+          <img src="/logo.png" alt="Indian Atlantic Hotel" className="checkout-logo mb-6" style={{ height: '50px', width: 'auto' }} />
           <h2 style={{color: 'var(--color-primary-navy)'}}>Guest Details</h2>
           <form onSubmit={handlePayment} className="mt-6">
             <div className="form-grid">

@@ -7,16 +7,84 @@
   align-items: flex-end;
 }
 
+.breadcrumb-container {
+  padding-top: 6rem; /* Space below fixed header */
+  padding-bottom: 1rem;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.breadcrumb a {
+  color: var(--color-primary-navy);
+  transition: color 0.3s ease;
+}
+
+.breadcrumb a:hover {
+  color: var(--color-primary-gold);
+}
+
+.breadcrumb .current {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.floating-back-btn {
+  position: absolute;
+  top: 50%;
+  left: 2rem;
+  transform: translateY(-50%);
+  z-index: 20;
+  background: var(--color-primary-gold);
+  color: var(--color-primary-navy);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floating-back-btn:hover {
+  background: #fff;
+  left: 1.5rem;
+  box-shadow: 0 8px 30px rgba(184, 147, 73, 0.4);
+}
+
+@media (max-width: 768px) {
+  .floating-back-btn {
+    left: 1rem;
+    width: 40px;
+    height: 40px;
+  }
+  .floating-back-btn:hover {
+    left: 0.75rem;
+  }
+}
+
 .hero-content-small {
   position: relative;
   z-index: 10;
   padding-bottom: 3rem;
   color: var(--color-text-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center the room name */
+  width: 100%;
 }
 
 .hero-content-small h1 {
   font-size: 3rem;
   color: var(--color-text-light);
+  line-height: 1.2;
+  text-align: center;
 }
 
 .py-12 {
