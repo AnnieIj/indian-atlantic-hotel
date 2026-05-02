@@ -35,35 +35,32 @@ const Checkout = () => {
   const days = differenceInDays(new Date(checkOut), new Date(checkIn));
   const total = days * room.price;
 
-  const handlePayment = (e) => {
+  const handlePayment = async (e) => {
     e.preventDefault();
     setIsProcessing(true);
     
-    // Mock Paystack API call
-    setTimeout(() => {
-      const bookingData = {
-        roomId: room.id,
-        roomName: room.name,
-        checkIn,
-        checkOut,
-        guestName: `${formData.firstName} ${formData.lastName}`,
-        guestEmail: formData.email,
-        guestPhone: formData.phone,
-        status: 'confirmed', // Simulation: confirmed after payment success
-        paymentStatus: 'success',
-        totalPrice: total,
-        totalAmount: total,
-      };
-      
-      const res = createBooking(bookingData);
-      setIsProcessing(false);
-      
-      if (res.success) {
-        setIsSuccess(true);
-      } else {
-        alert(res.message);
-      }
-    }, 2000);
+    const bookingData = {
+      roomId: room.id,
+      roomName: room.name,
+      checkIn,
+      checkOut,
+      guestName: `${formData.firstName} ${formData.lastName}`,
+      guestEmail: formData.email,
+      guestPhone: formData.phone,
+      status: 'confirmed', // Simulation: confirmed after payment success
+      paymentStatus: 'success',
+      totalPrice: total,
+      totalAmount: total,
+    };
+    
+    const res = await createBooking(bookingData);
+    setIsProcessing(false);
+    
+    if (res.success) {
+      setIsSuccess(true);
+    } else {
+      alert(res.message);
+    }
   };
 
   if (isSuccess) {

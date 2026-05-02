@@ -19,6 +19,7 @@ const AdminPayments = () => {
               <th>Booking ID</th>
               <th>Amount</th>
               <th>Method</th>
+              <th>Paystack Ref</th>
               <th>Date</th>
               <th>Status</th>
             </tr>
@@ -37,6 +38,7 @@ const AdminPayments = () => {
                       <CreditCard size={14} /> {payment.method}
                     </div>
                   </td>
+                  <td style={{fontSize: '0.8rem', color: '#64748b'}}>{payment.paystackRef || '-'}</td>
                   <td style={{fontSize: '0.9rem'}}>{new Date(payment.createdAt).toLocaleString()}</td>
                   <td>
                     <span className={`badge ${payment.status === 'success' ? 'badge-success' : 'badge-danger'}`} style={{display: 'flex', alignItems: 'center', gap: '0.3rem', width: 'fit-content'}}>
@@ -48,7 +50,7 @@ const AdminPayments = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="6" style={{textAlign: 'center', padding: '3rem', color: '#94a3b8'}}>No payment records found</td>
+                <td colSpan="7" style={{textAlign: 'center', padding: '3rem', color: '#94a3b8'}}>No payment records found</td>
               </tr>
             )}
           </tbody>

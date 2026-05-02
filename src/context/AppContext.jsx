@@ -33,7 +33,8 @@ export const AppProvider = ({ children }) => {
       id: `p${b.id}`,
       bookingId: b.id,
       amount: b.totalPrice,
-      method: 'Card',
+      method: 'Paystack',
+      paystackRef: 'mock_ref_' + b.id,
       status: 'success',
       createdAt: b.createdAt
     }));
@@ -109,34 +110,50 @@ export const AppProvider = ({ children }) => {
     return !overlaps;
   };
 
-  const createBooking = (bookingData) => {
+  const createBooking = async (bookingData) => {
     if (!checkAvailability(bookingData.roomId, bookingData.checkIn, bookingData.checkOut)) {
       return { success: false, message: 'Room is not available for these dates' };
     }
     
-    const newBooking = {
-      ...bookingData,
-      id: `b${Date.now()}`,
-      createdAt: new Date().toISOString()
-    };
-    
-    setBookings([...bookings, newBooking]);
-    
-    // Create linked payment log
-    const newPayment = {
-      id: `p${Date.now()}`,
-      bookingId: newBooking.id,
-      amount: newBooking.totalPrice,
-      method: 'Card',
-      status: 'success',
-      createdAt: newBooking.createdAt
-    };
-    setPayments([...payments, newPayment]);
-    
-    // Automatically update the room status to 'booked' so it shows as unavailable on the frontend
-    setRooms(rooms.map(r => r.id === bookingData.roomId ? { ...r, status: 'booked' } : r));
-    
-    return { success: true, booking: newBooking };
+    return new Promise((resolve) => {
+      const handler = window.PaystackPop.setup({
+        key: 'pk_test_f68bf2750d5f94a2ca50db5dd38ca683f2d45152',
+        email: currentUser?.email || bookingData.guestEmail,
+        amount: bookingData.totalPrice * 100,
+        currency: 'NGN',
+        ref: 'IAH_' + Date.now(),
+        callback: (response) => {
+          const newBooking = {
+            ...bookingData,
+            id: `b${Date.now()}`,
+            createdAt: new Date().toISOString()
+          };
+          
+          setBookings(prev => [...prev, newBooking]);
+          
+          // Create linked payment log
+          const newPayment = {
+            id: `p${Date.now()}`,
+            bookingId: newBooking.id,
+            amount: newBooking.totalPrice,
+            method: 'Paystack',
+            status: 'success',
+            paystackRef: response.reference,
+            createdAt: newBooking.createdAt
+          };
+          setPayments(prev => [...prev, newPayment]);
+          
+          // Automatically update the room status to 'booked' so it shows as unavailable on the frontend
+          setRooms(prevRooms => prevRooms.map(r => r.id === bookingData.roomId ? { ...r, status: 'booked' } : r));
+          
+          resolve({ success: true, booking: newBooking });
+        },
+        onClose: () => {
+          resolve({ success: false, message: 'Payment cancelled' });
+        }
+      });
+      handler.openIframe();
+    });
   };
 
   const updateBookingStatus = (id, status) => {

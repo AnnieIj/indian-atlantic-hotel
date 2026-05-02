@@ -1,33 +1,73 @@
 import { addDays, format } from 'date-fns';
 
 export const generateRooms = () => {
-  const roomInventory = [
-    { type: 'Suite', count: 2, price: 101000, capacity: 4, image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=800', description: 'Our most luxurious offering featuring expansive living areas and premium amenities.', amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Mini Bar', 'Ocean View', 'Lounge Area'] },
-    { type: 'Double Executive', count: 1, price: 81000, capacity: 3, image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800', description: 'A spacious double executive room perfect for extended stays or small groups.', amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Mini Bar', 'City View'] },
-    { type: 'Executive', count: 5, price: 61000, capacity: 2, image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=800', description: 'Experience elevated comfort in our executive room featuring premium furnishings.', amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Mini Bar'] },
-    { type: 'Super Deluxe', count: 11, price: 51000, capacity: 2, image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=800', description: 'Upgraded deluxe room offering additional space and superior comfort.', amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Room Service'] },
-    { type: 'Deluxe', count: 4, price: 46000, capacity: 2, image: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&q=80&w=800', description: 'A cozy and modern deluxe room with essential amenities for a comfortable stay.', amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV'] },
-    { type: 'Standard', count: 5, price: 41000, capacity: 2, image: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&q=80&w=800', description: 'A comfortable standard room designed for simplicity and relaxation.', amenities: ['Free Wi-Fi', 'Air Conditioning'] }
-  ];
+  const roomTypes = {
+    'Suite': {
+      numbers: [204, 304],
+      price: 101000,
+      capacity: 4,
+      image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=800',
+      description: 'Our most luxurious offering featuring expansive living areas and premium amenities.',
+      amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Mini Bar', 'Ocean View', 'Lounge Area']
+    },
+    'Double Executive': {
+      numbers: [311],
+      price: 81000,
+      capacity: 3,
+      image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800',
+      description: 'A spacious double executive room perfect for extended stays or small groups.',
+      amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Mini Bar', 'City View']
+    },
+    'Executive': {
+      numbers: [103, 104, 210, 303, 312],
+      price: 61000,
+      capacity: 2,
+      image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=800',
+      description: 'Experience elevated comfort in our executive room featuring premium furnishings.',
+      amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Mini Bar']
+    },
+    'Super Deluxe': {
+      numbers: [106, 113, 203, 206, 208, 211, 305, 306, 307, 308, 310],
+      price: 51000,
+      capacity: 2,
+      image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=800',
+      description: 'Upgraded deluxe room offering additional space and superior comfort.',
+      amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Room Service']
+    },
+    'Deluxe': {
+      numbers: [102, 105, 205, 209],
+      price: 46000,
+      capacity: 2,
+      image: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&q=80&w=800',
+      description: 'A cozy and modern deluxe room with essential amenities for a comfortable stay.',
+      amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV']
+    },
+    'Standard': {
+      numbers: [101, 202, 207, 309, 314],
+      price: 41000,
+      capacity: 2,
+      image: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&q=80&w=800',
+      description: 'A comfortable standard room designed for simplicity and relaxation.',
+      amenities: ['Free Wi-Fi', 'Air Conditioning']
+    }
+  };
 
   let rooms = [];
-  let roomIdCounter = 101;
 
-  roomInventory.forEach(category => {
-    for (let i = 0; i < category.count; i++) {
+  Object.entries(roomTypes).forEach(([type, config]) => {
+    config.numbers.forEach(num => {
       rooms.push({
-        id: `r${roomIdCounter}`,
-        name: `${category.type} Room ${roomIdCounter}`,
-        type: category.type,
-        price: category.price,
-        capacity: category.capacity,
-        status: roomIdCounter % 7 === 0 ? 'booked' : roomIdCounter % 13 === 0 ? 'maintenance' : 'available',
-        image: category.image,
-        description: category.description,
-        amenities: category.amenities
+        id: `r${num}`,
+        name: `${type} Room ${num}`,
+        type: type,
+        price: config.price,
+        capacity: config.capacity,
+        status: num % 7 === 0 ? 'booked' : num % 13 === 0 ? 'maintenance' : 'available',
+        image: config.image,
+        description: config.description,
+        amenities: config.amenities
       });
-      roomIdCounter++;
-    }
+    });
   });
 
   return rooms;
@@ -35,9 +75,9 @@ export const generateRooms = () => {
 
 // Keep mockRooms for the featured section on the Home page (take one of each of the top 3 types)
 export const mockRooms = [
-  { id: 'r101', name: 'Suite Room 101', type: 'Suite', price: 101000, capacity: 4, image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=800', description: 'Our most luxurious offering featuring expansive living areas and premium amenities.', amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Mini Bar', 'Ocean View', 'Lounge Area'] },
+  { id: 'r204', name: 'Suite Room 204', type: 'Suite', price: 101000, capacity: 4, image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=800', description: 'Our most luxurious offering featuring expansive living areas and premium amenities.', amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Mini Bar', 'Ocean View', 'Lounge Area'] },
   { id: 'r104', name: 'Executive Room 104', type: 'Executive', price: 61000, capacity: 2, image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=800', description: 'Experience elevated comfort in our executive room featuring premium furnishings.', amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Mini Bar'] },
-  { id: 'r109', name: 'Super Deluxe Room 109', type: 'Super Deluxe', price: 51000, capacity: 2, image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=800', description: 'Upgraded deluxe room offering additional space and superior comfort.', amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Room Service'] }
+  { id: 'r106', name: 'Super Deluxe Room 106', type: 'Super Deluxe', price: 51000, capacity: 2, image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=800', description: 'Upgraded deluxe room offering additional space and superior comfort.', amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Room Service'] }
 ];
 
 export const mockUsers = [
@@ -61,7 +101,7 @@ export const mockBookings = [
   {
     id: 'b2',
     userId: 'u2',
-    roomId: 'r110', // super deluxe
+    roomId: 'r310', // super deluxe
     checkIn: format(addDays(new Date(), 5), 'yyyy-MM-dd'),
     checkOut: format(addDays(new Date(), 7), 'yyyy-MM-dd'),
     status: 'pending',
