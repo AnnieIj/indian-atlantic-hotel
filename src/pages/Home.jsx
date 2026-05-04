@@ -15,23 +15,6 @@ const Home = () => {
   const [checkOut, setCheckOut] = useState(null);
   const [guests, setGuests] = useState('1');
 
-  // Hero Slideshow State
-  const heroImages = [
-    '/indian atlantic pics/hero 1.jpeg',
-    '/indian atlantic pics/r3.jpeg',
-    '/indian atlantic pics/heritage.jpeg',
-    '/indian atlantic pics/RBA_5168.jpg.jpeg',
-    '/indian atlantic pics/RBA_5177.jpg.jpeg'
-  ];
-  const [currentHero, setCurrentHero] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentHero((prev) => (prev + 1) % heroImages.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [heroImages.length]);
-
   // Review Modal State
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [newReview, setNewReview] = useState({ name: '', location: '', text: '', rating: 5 });
@@ -66,19 +49,7 @@ const Home = () => {
 
   return (
     <div className="home-page">
-      {/* Hero Section */}
       <section className="hero">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentHero}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.5 }}
-            className="hero-slide"
-            style={{ backgroundImage: `url('${heroImages[currentHero]}')` }}
-          />
-        </AnimatePresence>
         <div className="hero-overlay"></div>
         <div className="container hero-content">
           <motion.div
