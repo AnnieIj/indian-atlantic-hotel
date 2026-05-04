@@ -562,28 +562,50 @@
 }
 
 @media (max-width: 768px) {
+  .hero {
+    height: 80vh;
+  }
+  .hero-brand {
+    font-size: 1rem;
+    letter-spacing: 0.3rem;
+  }
   .hero-text h1 {
-    font-size: 3rem;
+    font-size: 2.25rem;
+    line-height: 1.1;
+    padding: 0 0.5rem;
+  }
+  .hero-text p {
+    font-size: 1rem;
+    padding: 0 1rem;
   }
   .section {
-    padding: 60px 0;
-  }
-  .section-header h2 {
-    font-size: 2.25rem;
-  }
-  .features-grid {
-    grid-template-columns: repeat(2, 1fr);
+    padding: 50px 0;
   }
 }
 
 @media (max-width: 480px) {
+  .hero {
+    height: 75vh;
+  }
+  .hero-brand {
+    font-size: 0.85rem;
+    letter-spacing: 0.2rem;
+  }
   .hero-text h1 {
-    font-size: 2.5rem;
+    font-size: 1.85rem;
+    margin-bottom: 0.75rem;
+  }
+  .hero-text p {
+    font-size: 0.95rem;
   }
   .search-bar {
     grid-template-columns: 1fr;
+    width: 92%;
+    padding: 1.25rem;
+    gap: 1rem;
   }
   .search-btn {
+    height: 45px;
     grid-column: span 1;
   }
   .features-grid {

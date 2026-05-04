@@ -82,21 +82,23 @@
 
 @media (max-width: 768px) {
   .logo-img {
-    height: 30px;
+    height: 28px;
   }
 
   .nav {
     position: fixed;
     top: 0;
     right: -100%;
-    width: 80%;
+    width: 85%;
+    max-width: 300px;
     height: 100vh;
     background: var(--color-primary-navy);
     flex-direction: column;
-    padding-top: 8rem;
-    gap: 2.5rem;
-    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 6rem 2rem 2rem;
+    gap: 1.5rem;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: -10px 0 30px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
   }
 
   .nav.open {
@@ -105,18 +107,27 @@
   
   .nav a {
     color: var(--color-text-light) !important;
-    font-size: 1.25rem;
-    letter-spacing: 0.1rem;
+    font-size: 1.1rem;
+    width: 100%;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
 
   .mobile-toggle {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     z-index: 1001;
     padding: 0.5rem;
-    margin-right: -0.5rem;
+    color: inherit;
+    background: none;
   }
 
   .header-container {
     padding: 0 1rem;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 }
