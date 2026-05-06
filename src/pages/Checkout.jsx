@@ -30,6 +30,9 @@ const Checkout = () => {
     if (foundRoom) setRoom(foundRoom);
   }, [roomId, rooms]);
 
+  const [paymentMethod, setPaymentMethod] = useState('Bank Transfer');
+  const [receipt, setReceipt] = useState(null);
+
   if (!room || !checkIn || !checkOut) return <div className="pt-32 text-center">Invalid booking details.</div>;
 
   const days = differenceInDays(new Date(checkOut), new Date(checkIn));
@@ -47,8 +50,10 @@ const Checkout = () => {
       guestName: `${formData.firstName} ${formData.lastName}`,
       guestEmail: formData.email,
       guestPhone: formData.phone,
-      status: 'confirmed', // Simulation: confirmed after payment success
-      paymentStatus: 'success',
+      paymentMethod,
+      receipt: receipt ? receipt.name : null,
+      status: paymentMethod === 'Bank Transfer' ? 'pending' : 'confirmed',
+      paymentStatus: paymentMethod === 'Bank Transfer' ? 'pending' : 'success',
       totalPrice: total,
       totalAmount: total,
     };
@@ -68,9 +73,13 @@ const Checkout = () => {
       <main className="checkout-page bg-light pt-32 pb-12">
         <div className="container text-center py-12">
           <CheckCircle size={64} className="text-gold mx-auto mb-4" />
-          <h2>Booking Confirmed!</h2>
+          <h2>Booking Submitted!</h2>
           <p className="mt-4">Thank you for choosing Indian Atlantic Hotel.</p>
-          <p>Your payment of ₦{total.toLocaleString()} was successful.</p>
+          {paymentMethod === 'Bank Transfer' ? (
+            <p>Your booking is pending verification of your transfer. We will contact you shortly.</p>
+          ) : (
+            <p>Your payment of ₦{total.toLocaleString()} was successful.</p>
+          )}
           <button className="btn btn-primary mt-8" onClick={() => navigate('/')}>Return Home</button>
         </div>
       </main>
@@ -104,10 +113,76 @@ const Checkout = () => {
             </div>
             
             <div className="payment-section mt-8">
-              <h3 style={{color: 'var(--color-primary-navy)'}}>Payment Details</h3>
-              <p className="text-muted text-sm mb-4">Secured by Paystack Mock</p>
-              <button type="submit" className="btn btn-primary w-full" disabled={isProcessing}>
-                {isProcessing ? 'Processing Payment...' : `Pay ₦${total.toLocaleString()} Now`}
+              <h3 className="mb-4" style={{color: 'var(--color-primary-navy)'}}>Select Payment Method</h3>
+              
+              <div className="payment-methods-grid">
+                <div 
+                  className={`payment-method-card ${paymentMethod === 'Bank Transfer' ? 'active' : ''}`}
+                  onClick={() => setPaymentMethod('Bank Transfer')}
+                >
+                  <div className="method-icon"><CheckCircle size={20} /></div>
+                  <div className="method-info">
+                    <h4>Bank Transfer</h4>
+                    <p>Pay via Mobile App or Bank</p>
+                  </div>
+                  <div className="status-badge active">Active</div>
+                </div>
+
+                <div className="payment-method-card disabled">
+                  <div className="method-icon"><CheckCircle size={20} /></div>
+                  <div className="method-info">
+                    <h4>Paystack</h4>
+                    <p>Pay with Card/Transfer</p>
+                  </div>
+                  <div className="status-badge upcoming">Coming Soon</div>
+                </div>
+              </div>
+
+              {paymentMethod === 'Bank Transfer' && (
+                <div className="bank-details-panel mt-6">
+                  <div className="bank-details-header">
+                    <h4>Transfer Details</h4>
+                    <p className="text-muted text-sm">Please transfer the exact total amount to the account below.</p>
+                  </div>
+                  <div className="bank-info-grid mt-4">
+                    <div className="bank-info-item">
+                      <span className="label">Bank Name</span>
+                      <span className="value">Moniepoint</span>
+                    </div>
+                    <div className="bank-info-item">
+                      <span className="label">Account Name</span>
+                      <span className="value">Indian Atlantic Kitchen 2</span>
+                    </div>
+                    <div className="bank-info-item">
+                      <span className="label">Account Number</span>
+                      <span className="value accent">5070119651</span>
+                    </div>
+                  </div>
+                  
+                  <div className="receipt-upload mt-6">
+                    <label>Upload Payment Receipt (Optional)</label>
+                    <div className="upload-box mt-2">
+                      <input 
+                        type="file" 
+                        id="receipt" 
+                        className="hidden" 
+                        onChange={(e) => setReceipt(e.target.files[0])}
+                        accept="image/*,.pdf"
+                      />
+                      <label htmlFor="receipt" className="upload-label">
+                        {receipt ? receipt.name : 'Choose file or drag & drop'}
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <p className="payment-note mt-4">
+                    <strong>Note:</strong> Please send proof of payment after transfer.
+                  </p>
+                </div>
+              )}
+
+              <button type="submit" className="btn btn-primary w-full mt-8" disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : paymentMethod === 'Bank Transfer' ? 'I Have Paid' : `Pay ₦${total.toLocaleString()} Now`}
               </button>
             </div>
           </form>

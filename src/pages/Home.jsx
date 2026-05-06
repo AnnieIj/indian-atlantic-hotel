@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Users, ChevronRight, Star, Wifi, Zap, Coffee, Utensils, ShieldCheck, MapPin, Plus, X, ChevronDown } from 'lucide-react';
+import { Calendar, Users, ChevronRight, ChevronLeft, Star, Wifi, Zap, Coffee, Utensils, ShieldCheck, MapPin, Plus, X, ChevronDown } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { mockRooms } from '../data/mockData';
@@ -31,6 +31,25 @@ const Home = () => {
     setShowReviewModal(false);
     setNewReview({ name: '', location: '', text: '', rating: 5 });
   };
+
+  // Gallery Carousel State
+  const galleryImages = [
+    "/indian atlantic pics/IMG-20260224-WA0036.jpg.jpeg",
+    "/indian atlantic pics/IMG-20260224-WA0037(1).jpg.jpeg",
+    "/indian atlantic pics/IMG-20260224-WA0041(1).jpg.jpeg",
+    "/indian atlantic pics/IMG-20260224-WA0044.jpg.jpeg",
+    "/indian atlantic pics/IMG-20260224-WA0045.jpg.jpeg",
+    "/indian atlantic pics/IMG-20260224-WA0049.jpg.jpeg",
+    "/indian atlantic pics/IMG-20260224-WA0051.jpg.jpeg",
+    "/indian atlantic pics/IMG-20260224-WA0052.jpg.jpeg",
+    "/indian atlantic pics/IMG-20260224-WA0053.jpg.jpeg",
+    "/indian atlantic pics/RBA_5156.jpg.jpeg",
+    "/indian atlantic pics/RBA_5183.jpg.jpeg"
+  ];
+  const [currentGallery, setCurrentGallery] = useState(0);
+
+  const nextGallery = () => setCurrentGallery((prev) => (prev + 1) % galleryImages.length);
+  const prevGallery = () => setCurrentGallery((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
 
   const fadeInUp = {
     initial: { opacity: 0, y: 30 },
@@ -321,32 +340,64 @@ const Home = () => {
             <p style={{ color: 'var(--color-text-muted)' }}>A glimpse into the elegance and comfort of Indian Atlantic Hotel.</p>
           </motion.div>
 
-          <div className="rooms-grid" style={{ marginTop: '3rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
-            {[
-              "/indian atlantic pics/IMG-20260224-WA0036.jpg.jpeg",
-              "/indian atlantic pics/IMG-20260224-WA0044.jpg.jpeg",
-              "/indian atlantic pics/IMG-20260224-WA0045.jpg.jpeg",
-              "/indian atlantic pics/IMG-20260224-WA0049.jpg.jpeg",
-              "/indian atlantic pics/IMG-20260224-WA0051.jpg.jpeg",
-              "/indian atlantic pics/IMG-20260224-WA0053.jpg.jpeg"
-            ].map((img, idx) => (
-              <motion.div
-                key={idx}
-                className="gallery-item"
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                style={{ borderRadius: '8px', overflow: 'hidden', height: '250px' }}
+          <div className="gallery-carousel-wrapper" style={{ marginTop: '3rem', position: 'relative' }}>
+            <div className="gallery-carousel-container" style={{ overflow: 'hidden', borderRadius: '16px', position: 'relative', height: '500px', boxShadow: 'var(--shadow-lg)' }}>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentGallery}
+                  initial={{ opacity: 0, x: 100 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  transition={{ duration: 0.5 }}
+                  style={{ width: '100%', height: '100%', position: 'absolute' }}
+                >
+                  <img
+                    src={galleryImages[currentGallery]}
+                    alt={`Property showcase ${currentGallery + 1}`}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  <div className="gallery-caption" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '2rem', background: 'linear-gradient(transparent, rgba(0,0,0,0.7))', color: '#fff' }}>
+                    <h3 style={{ color: '#fff', marginBottom: '0.5rem' }}>Property View {currentGallery + 1}</h3>
+                    <p style={{ fontSize: '0.9rem', opacity: 0.9 }}>Experience the unique blend of luxury and comfort at Indian Atlantic Hotel.</p>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Navigation Arrows */}
+              <button 
+                onClick={prevGallery}
+                className="gallery-nav-btn prev"
+                style={{ position: 'absolute', left: '1.5rem', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', border: 'none', borderRadius: '50%', width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', cursor: 'pointer', zIndex: 10, transition: 'all 0.3s ease' }}
+                aria-label="Previous image"
               >
-                <img
-                  src={img}
-                  alt={`Property showcase ${idx + 1}`}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
-                  className="hover-zoom"
+                <ChevronLeft size={24} />
+              </button>
+              <button 
+                onClick={nextGallery}
+                className="gallery-nav-btn next"
+                style={{ position: 'absolute', right: '1.5rem', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', border: 'none', borderRadius: '50%', width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', cursor: 'pointer', zIndex: 10, transition: 'all 0.3s ease' }}
+                aria-label="Next image"
+              >
+                <ChevronRight size={24} />
+              </button>
+
+              {/* Counter Indicator */}
+              <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', padding: '0.5rem 1rem', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', borderRadius: '20px', color: '#fff', fontSize: '0.8rem', fontWeight: 600, zIndex: 10 }}>
+                {currentGallery + 1} / {galleryImages.length}
+              </div>
+            </div>
+
+            {/* Dots Navigation */}
+            <div className="gallery-dots" style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginTop: '1.5rem' }}>
+              {galleryImages.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentGallery(idx)}
+                  style={{ width: idx === currentGallery ? '30px' : '10px', height: '10px', borderRadius: '5px', background: idx === currentGallery ? 'var(--color-primary-gold)' : 'rgba(0,0,0,0.1)', border: 'none', transition: 'all 0.3s ease', cursor: 'pointer' }}
+                  aria-label={`Go to slide ${idx + 1}`}
                 />
-              </motion.div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>

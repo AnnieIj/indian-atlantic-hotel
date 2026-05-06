@@ -82,11 +82,163 @@
   margin: 1rem 0;
 }
 
+.payment-methods-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.payment-method-card {
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+  background: var(--color-background-white);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.payment-method-card.active {
+  border-color: var(--color-primary-gold);
+  background: rgba(197, 160, 102, 0.05);
+}
+
+.payment-method-card.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+.method-icon {
+  width: 40px;
+  height: 40px;
+  background: #f8fafc;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary-navy);
+}
+
+.payment-method-card.active .method-icon {
+  background: var(--color-primary-gold);
+  color: white;
+}
+
+.method-info h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-primary-navy);
+}
+
+.method-info p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-dark);
+  opacity: 0.7;
+}
+
+.status-badge {
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.status-badge.active {
+  background: var(--color-primary-gold);
+  color: white;
+}
+
+.status-badge.upcoming {
+  background: #cbd5e1;
+  color: #475569;
+}
+
+.bank-details-panel {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.bank-info-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.bank-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.bank-info-item:last-child {
+  border-bottom: none;
+}
+
+.bank-info-item .label {
+  font-size: 0.875rem;
+  color: var(--color-text-dark);
+}
+
+.bank-info-item .value {
+  font-weight: 600;
+  color: var(--color-primary-navy);
+}
+
+.bank-info-item .value.accent {
+  font-size: 1.25rem;
+  color: var(--color-primary-gold);
+  letter-spacing: 1px;
+}
+
+.upload-box {
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  transition: border-color 0.3s ease;
+}
+
+.upload-box:hover {
+  border-color: var(--color-primary-gold);
+}
+
+.upload-label {
+  cursor: pointer;
+  color: var(--color-primary-navy);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.payment-note {
+  font-size: 0.875rem;
+  color: #ef4444;
+  text-align: center;
+}
+
+.hidden {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .checkout-container {
     grid-template-columns: 1fr;
   }
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .payment-methods-grid {
     grid-template-columns: 1fr;
   }
 }

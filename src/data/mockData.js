@@ -117,6 +117,12 @@ export const generateRooms = () => {
         capacity: config.capacity,
         status: num % 7 === 0 ? 'booked' : num % 13 === 0 ? 'maintenance' : 'available',
         image: selectedImage,
+        images: [
+          selectedImage,
+          allImages[(imgIndex + 1) % allImages.length],
+          allImages[(imgIndex + 2) % allImages.length],
+          allImages[(imgIndex + 3) % allImages.length]
+        ],
         description: config.description,
         amenities: config.amenities
       });

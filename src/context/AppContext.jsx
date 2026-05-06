@@ -127,6 +127,32 @@ export const AppProvider = ({ children }) => {
       return { success: false, message: 'Room is not available for these dates' };
     }
     
+    if (bookingData.paymentMethod === 'Bank Transfer') {
+      const newBooking = {
+        ...bookingData,
+        id: `b${Date.now()}`,
+        status: 'pending', // Pending verification for bank transfer
+        paymentStatus: 'pending',
+        createdAt: new Date().toISOString()
+      };
+      
+      setBookings(prev => [...prev, newBooking]);
+      
+      const newPayment = {
+        id: `p${Date.now()}`,
+        bookingId: newBooking.id,
+        amount: newBooking.totalPrice,
+        method: 'Bank Transfer',
+        status: 'pending',
+        receipt: bookingData.receipt, // Store receipt name or data
+        createdAt: newBooking.createdAt
+      };
+      setPayments(prev => [...prev, newPayment]);
+      setRooms(prevRooms => prevRooms.map(r => r.id === bookingData.roomId ? { ...r, status: 'booked' } : r));
+      
+      return { success: true, booking: newBooking };
+    }
+    
     return new Promise((resolve) => {
       const handler = window.PaystackPop.setup({
         key: 'pk_test_f68bf2750d5f94a2ca50db5dd38ca683f2d45152',
