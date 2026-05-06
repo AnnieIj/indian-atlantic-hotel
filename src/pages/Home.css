@@ -3,11 +3,20 @@
 }
 
 /* Hero Section */
+img[loading="lazy"] {
+  opacity: 0;
+  transition: opacity 0.5s ease-in;
+}
+
+img[loading="lazy"].loaded {
+  opacity: 1;
+}
+
 .hero {
-  height: 90vh;
+  min-height: 100vh;
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   overflow: hidden;
   color: #ffffff;
@@ -15,6 +24,18 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3.5rem;
+  z-index: 2;
+  text-align: center;
+  width: 100%;
+  padding-top: 180px; /* Strong offset to clear header completely */
+  padding-bottom: 60px;
 }
 
 .hero-text h1 {
@@ -44,6 +65,7 @@
   z-index: 2;
   text-align: center;
   width: 100%;
+  padding-top: 120px; /* Offset for fixed header */
 }
 
 .hero-brand {

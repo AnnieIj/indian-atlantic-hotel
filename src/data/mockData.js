@@ -78,16 +78,16 @@ export const generateRooms = () => {
   ];
 
   const onlineImages = [
-    'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=800&fm=webp',
-    'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&q=80&w=800&fm=webp',
-    'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800&fm=webp',
-    'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=800&fm=webp',
-    'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=800&fm=webp',
-    'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&q=80&w=800&fm=webp',
-    'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&q=80&w=800&fm=webp',
-    'https://images.unsplash.com/photo-1540518614846-76433848584b?auto=format&fit=crop&q=80&w=800&fm=webp',
-    'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?auto=format&fit=crop&q=80&w=800&fm=webp',
-    'https://images.unsplash.com/photo-1615874959474-d609969a20ed?auto=format&fit=crop&q=80&w=800&fm=webp'
+    'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=60&w=800&fm=webp',
+    'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&q=60&w=800&fm=webp',
+    'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=60&w=800&fm=webp',
+    'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=60&w=800&fm=webp',
+    'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=60&w=800&fm=webp',
+    'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&q=60&w=800&fm=webp',
+    'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&q=60&w=800&fm=webp',
+    'https://images.unsplash.com/photo-1540518614846-76433848584b?auto=format&fit=crop&q=60&w=800&fm=webp',
+    'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?auto=format&fit=crop&q=60&w=800&fm=webp',
+    'https://images.unsplash.com/photo-1615874959474-d609969a20ed?auto=format&fit=crop&q=60&w=800&fm=webp'
   ];
 
   const allImages = [...localImages, ...onlineImages];
@@ -135,9 +135,9 @@ export const generateRooms = () => {
 
 // Keep mockRooms for the featured section on the Home page (take one of each of the top 3 types)
 export const mockRooms = [
-  { id: 'r204', name: 'Suite Room 204', type: 'Suite', price: 101000, capacity: 4, image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=800&fm=webp', description: 'Our most luxurious offering featuring expansive living areas and premium amenities.', amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Mini Bar', 'Ocean View', 'Lounge Area'] },
-  { id: 'r104', name: 'Executive Room 104', type: 'Executive', price: 61000, capacity: 2, image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=800&fm=webp', description: 'Experience elevated comfort in our executive room featuring premium furnishings.', amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Mini Bar'] },
-  { id: 'r106', name: 'Super Deluxe Room 106', type: 'Super Deluxe', price: 51000, capacity: 2, image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=800&fm=webp', description: 'Upgraded deluxe room offering additional space and superior comfort.', amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Room Service'] }
+  { id: 'r204', name: 'Suite Room 204', type: 'Suite', price: 101000, capacity: 4, image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=60&w=800&fm=webp', description: 'Our most luxurious offering featuring expansive living areas and premium amenities.', amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Mini Bar', 'Ocean View', 'Lounge Area'] },
+  { id: 'r104', name: 'Executive Room 104', type: 'Executive', price: 61000, capacity: 2, image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=60&w=800&fm=webp', description: 'Experience elevated comfort in our executive room featuring premium furnishings.', amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Mini Bar'] },
+  { id: 'r106', name: 'Super Deluxe Room 106', type: 'Super Deluxe', price: 51000, capacity: 2, image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=60&w=800&fm=webp', description: 'Upgraded deluxe room offering additional space and superior comfort.', amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Room Service'] }
 ];
 
 export const mockUsers = [

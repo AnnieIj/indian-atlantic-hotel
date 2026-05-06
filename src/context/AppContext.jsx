@@ -10,16 +10,6 @@ export const AppProvider = ({ children }) => {
   const [users, setUsers] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
-  const [theme, setTheme] = useState(localStorage.getItem('iah_theme') || 'light');
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('iah_theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
 
   useEffect(() => {
     // Load from local storage or initialize with mock data
@@ -195,7 +185,14 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateBookingStatus = (id, status) => {
-    setBookings(bookings.map(b => b.id === id ? { ...b, status } : b));
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+    
+    // Also update associated payment if it exists
+    setPayments(prev => prev.map(p => p.bookingId === id ? { ...p, status: status === 'confirmed' ? 'success' : status === 'cancelled' ? 'failed' : 'pending' } : p));
+  };
+
+  const getBookingById = (id) => {
+    return bookings.find(b => b.id === id);
   };
 
   const updateRoom = (id, data) => {
@@ -218,8 +215,7 @@ export const AppProvider = ({ children }) => {
       payments, setPayments,
       users, setUsers,
       testimonials, addTestimonial,
-      currentUser, login, logout,
-      theme, toggleTheme
+      currentUser, login, logout
     }}>
       {children}
     </AppContext.Provider>

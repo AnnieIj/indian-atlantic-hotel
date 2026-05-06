@@ -130,7 +130,13 @@ const Rooms = () => {
                 transition={{ duration: 0.4, delay: index * 0.05 }}
                 className="room-card"
               >
-                <img src={room.image} alt={room.name} className="room-img" />
+                <img 
+                  src={room.image} 
+                  alt={room.name} 
+                  className="room-img" 
+                  loading="lazy" 
+                  onLoad={(e) => e.target.classList.add('loaded')}
+                />
                 <div className="room-info">
                   <div className="flex justify-between items-center mb-2">
                     <h3>{room.name}</h3>

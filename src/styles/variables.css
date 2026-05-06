@@ -31,19 +31,4 @@
   --glass-blur: blur(16px);
 }
 
-[data-theme='dark'] {
-  --color-background-light: #0a0f18;
-  --color-background-white: #0F1A2A;
-  --color-text-dark: #F8FAFC;
-  --color-text-muted: #94A3B8;
-  --glass-bg: rgba(15, 26, 42, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  
-  --badge-success-bg: #064e3b; --badge-success-text: #6ee7b7;
-  --badge-warning-bg: #78350f; --badge-warning-text: #fde047;
-  --badge-danger-bg: #7f1d1d; --badge-danger-text: #fca5a5;
-  --badge-info-bg: #0c4a6e; --badge-info-text: #7dd3fc;
-  
-  --shadow-md: 0 10px 30px rgba(0,0,0,0.3);
-  --shadow-lg: 0 20px 40px rgba(0,0,0,0.4);
-}
+

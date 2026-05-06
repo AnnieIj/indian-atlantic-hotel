@@ -53,6 +53,7 @@ const AdminBookings = () => {
               <th>Room</th>
               <th>Dates</th>
               <th>Total</th>
+              <th>Receipt</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -75,20 +76,36 @@ const AdminBookings = () => {
                     </td>
                     <td style={{fontWeight: 600}}>₦{(booking.totalAmount || booking.totalPrice || 0).toLocaleString()}</td>
                     <td>
+                      {booking.receipt ? (
+                        <img 
+                          src="https://images.unsplash.com/photo-1554224155-1696413565d3?auto=format&fit=crop&q=80&w=200" 
+                          alt="Receipt" 
+                          style={{ width: '50px', height: '50px', borderRadius: '4px', cursor: 'pointer', objectFit: 'cover' }}
+                          onClick={() => window.open('https://images.unsplash.com/photo-1554224155-1696413565d3?auto=format&fit=crop&q=80&w=800', '_blank')}
+                        />
+                      ) : '-'}
+                    </td>
+                    <td>
                       <span className={`badge ${getStatusBadge(booking.status)}`}>
                         {booking.status}
                       </span>
                     </td>
                     <td>
-                      <div style={{display: 'flex', gap: '0.5rem'}}>
+                      <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap'}}>
+                        {booking.status === 'pending' && (
+                          <>
+                            <button className="btn btn-primary" style={{padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: '#10b981', borderColor: '#10b981'}} onClick={() => updateBookingStatus(booking.id, 'confirmed')}>Approve</button>
+                            <button className="btn btn-outline" style={{padding: '0.4rem 0.8rem', fontSize: '0.75rem', color: '#ef4444', borderColor: '#ef4444'}} onClick={() => updateBookingStatus(booking.id, 'cancelled')}>Reject</button>
+                          </>
+                        )}
                         {booking.status === 'confirmed' && (
-                          <button className="btn btn-primary" style={{padding: '0.25rem 0.5rem', fontSize: '0.7rem'}} onClick={() => updateBookingStatus(booking.id, 'checked-in')}>In</button>
+                          <button className="btn btn-primary" style={{padding: '0.4rem 0.8rem', fontSize: '0.75rem'}} onClick={() => updateBookingStatus(booking.id, 'checked-in')}>Check In</button>
                         )}
                         {booking.status === 'checked-in' && (
-                          <button className="btn btn-outline" style={{padding: '0.25rem 0.5rem', fontSize: '0.7rem'}} onClick={() => updateBookingStatus(booking.id, 'checked-out')}>Out</button>
+                          <button className="btn btn-outline" style={{padding: '0.4rem 0.8rem', fontSize: '0.75rem'}} onClick={() => updateBookingStatus(booking.id, 'checked-out')}>Check Out</button>
                         )}
-                        {(booking.status === 'confirmed' || booking.status === 'pending') && (
-                          <button className="btn btn-outline" style={{padding: '0.25rem 0.5rem', fontSize: '0.7rem', color: 'red', borderColor: 'red'}} onClick={() => updateBookingStatus(booking.id, 'cancelled')}>Cancel</button>
+                        {booking.receipt && (
+                           <button className="btn btn-outline" style={{padding: '0.4rem 0.8rem', fontSize: '0.75rem'}} onClick={() => window.open('https://images.unsplash.com/photo-1554224155-1696413565d3?auto=format&fit=crop&q=80&w=800', '_blank')}>Receipt</button>
                         )}
                       </div>
                     </td>

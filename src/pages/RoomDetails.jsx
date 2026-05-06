@@ -78,6 +78,7 @@ const RoomDetails = () => {
               src={selectedImg} 
               alt={room.name} 
               className="main-gallery-img"
+              onLoad={(e) => e.target.classList.add('loaded')}
               onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
             />
           </div>
@@ -93,6 +94,8 @@ const RoomDetails = () => {
                   <img 
                     src={img} 
                     alt={`${room.name} view ${i + 1}`} 
+                    loading="lazy"
+                    onLoad={(e) => e.target.classList.add('loaded')}
                     onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
                   />
                 </div>

@@ -158,6 +158,7 @@ const Home = () => {
               src="/indian atlantic pics/heritage.jpeg"
               alt="Indian Atlantic Hotel Heritage and Culture"
               loading="lazy"
+              onLoad={(e) => e.target.classList.add('loaded')}
               style={{ width: '100%', borderRadius: '4px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)' }}
             />
           </motion.div>
@@ -207,6 +208,7 @@ const Home = () => {
                   alt={room.name}
                   className="room-img"
                   loading="lazy"
+                  onLoad={(e) => e.target.classList.add('loaded')}
                 />
                 <div className="room-info">
                   <h3>{room.name}</h3>
@@ -354,6 +356,7 @@ const Home = () => {
                   <img
                     src={galleryImages[currentGallery]}
                     alt={`Property showcase ${currentGallery + 1}`}
+                    onLoad={(e) => e.target.classList.add('loaded')}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                   <div className="gallery-caption" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '2rem', background: 'linear-gradient(transparent, rgba(0,0,0,0.7))', color: '#fff' }}>

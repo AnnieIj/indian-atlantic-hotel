@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import Rooms from './pages/Rooms';
 import RoomDetails from './pages/RoomDetails';
 import Checkout from './pages/Checkout';
+import BookingStatus from './pages/BookingStatus';
 
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminLayout from './pages/admin/AdminLayout';
@@ -28,6 +29,7 @@ function App() {
             <Route path="/rooms" element={<Rooms />} />
             <Route path="/room/:id" element={<RoomDetails />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/booking-status/:bookingId" element={<BookingStatus />} />
           </Route>
           
           {/* Admin Routes - No Main Site Header/Footer */}
