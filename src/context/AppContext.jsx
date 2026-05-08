@@ -1,7 +1,14 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { generateRooms, mockUsers, mockBookings, mockTestimonials } from '../data/mockData';
 
-export const AppContext = createContext();
+export const AppContext = createContext({
+  rooms: [], setRooms: () => {}, updateRoom: () => {},
+  bookings: [], setBookings: () => {}, updateBookingStatus: () => {}, createBooking: async () => ({}), checkAvailability: () => true,
+  payments: [], setPayments: () => {},
+  users: [], setUsers: () => {},
+  testimonials: [], addTestimonial: () => {},
+  currentUser: null, login: () => {}, logout: () => {}
+});
 
 export const AppProvider = ({ children }) => {
   const [rooms, setRooms] = useState([]);
@@ -23,10 +30,12 @@ export const AppProvider = ({ children }) => {
     const mockPayments = mockBookings.map(b => ({
       id: `p${b.id}`,
       bookingId: b.id,
-      amount: b.totalPrice,
-      method: 'Paystack',
-      paystackRef: 'mock_ref_' + b.id,
-      status: 'success',
+      amount: b.totalAmount || b.totalPrice,
+      method: 'Bank Transfer',
+      accountNumber: '5070119651',
+      accountName: 'Indian Atlantic Kitchen 2',
+      bankName: 'Moniepoint',
+      status: 'pending',
       createdAt: b.createdAt
     }));
     setPayments(mockPayments);
@@ -34,7 +43,7 @@ export const AppProvider = ({ children }) => {
     const localUsers = localStorage.getItem('iah_users');
     if (localUsers) {
       let parsedUsers = JSON.parse(localUsers);
-      parsedUsers = parsedUsers.map(u => u.role === 'admin' ? { ...u, email: 'admin@gmail.com' } : u);
+      parsedUsers = parsedUsers.map(u => u.role === 'admin' ? { ...u, email: 'indianatlantichotel@gmail.com' } : u);
       setUsers(parsedUsers);
     } else {
       setUsers(mockUsers);
@@ -83,8 +92,8 @@ export const AppProvider = ({ children }) => {
   // Actions
   const login = (email, password) => {
     const user = users.find(u => u.email === email);
-    if (email === 'admin@gmail.com' && password === 'admin123') {
-      const admin = users.find(u => u.role === 'admin');
+    if (email === 'indianatlantichotel@gmail.com' && password === 'indiana##') {
+      const admin = users.find(u => u.role === 'admin') || { id: 'admin1', name: 'Hotel Admin', email: 'indianatlantichotel@gmail.com', role: 'admin' };
       setCurrentUser(admin);
       return { success: true, user: admin };
     } else if (user) {

@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { Users, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
+import { Users, CheckCircle, XCircle, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import './RoomDetails.css';
 
 const RoomDetails = () => {
@@ -13,7 +13,9 @@ const RoomDetails = () => {
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [availabilityMsg, setAvailabilityMsg] = useState('');
-  const [selectedImg, setSelectedImg] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
   
   const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=1200';
 
@@ -21,9 +23,27 @@ const RoomDetails = () => {
     const foundRoom = rooms.find(r => r.id === id);
     if (foundRoom) {
       setRoom(foundRoom);
-      setSelectedImg(foundRoom.image || FALLBACK_IMAGE);
+      setCurrentIndex(0);
     }
   }, [id, rooms]);
+
+  const displayImages = room ? (room.images && room.images.length > 0 ? room.images : [room.image || FALLBACK_IMAGE]) : [];
+
+  const handlePrev = () => setCurrentIndex(prev => prev === 0 ? displayImages.length - 1 : prev - 1);
+  const handleNext = () => setCurrentIndex(prev => prev === displayImages.length - 1 ? 0 : prev + 1);
+
+  const minSwipeDistance = 50;
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+  const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (distance > minSwipeDistance) handleNext();
+    if (distance < -minSwipeDistance) handlePrev();
+  };
 
   if (!room) return (
     <div className="pt-32 text-center py-20">
@@ -66,35 +86,56 @@ const RoomDetails = () => {
         </div>
         
         <div className="room-gallery-wrapper mt-6">
-          <div className="main-image-container glass-panel">
+          <div className="main-image-container glass-panel" style={{ position: 'relative', overflow: 'hidden' }}
+               onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
             <button 
               onClick={() => navigate('/rooms')} 
               className="floating-back-btn"
               aria-label="Back to rooms"
+              style={{ zIndex: 10 }}
             >
               <ArrowLeft size={20} /> Back
             </button>
+            
+            {displayImages.length > 1 && (
+              <>
+                <button onClick={handlePrev} className="carousel-btn prev" aria-label="Previous image" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', zIndex: 5, background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                  <ChevronLeft size={24} />
+                </button>
+                <button onClick={handleNext} className="carousel-btn next" aria-label="Next image" style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', zIndex: 5, background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                  <ChevronRight size={24} />
+                </button>
+                <div style={{ position: 'absolute', bottom: '1rem', right: '1rem', background: 'rgba(0,0,0,0.6)', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 600, zIndex: 5 }}>
+                  {currentIndex + 1} of {displayImages.length}
+                </div>
+              </>
+            )}
+
             <img 
-              src={selectedImg} 
-              alt={room.name} 
+              key={currentIndex}
+              src={displayImages[currentIndex]} 
+              alt={`${room.name} view ${currentIndex + 1}`} 
               className="main-gallery-img"
-              onLoad={(e) => e.target.classList.add('loaded')}
+              style={{ transition: 'opacity 0.3s ease-in-out' }}
+              onLoad={(e) => { e.target.classList.add('loaded'); e.target.style.opacity = 1; }}
               onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
             />
           </div>
           
-          {room.images && room.images.length > 0 && (
-            <div className="thumbnails-grid mt-4">
-              {room.images.map((img, i) => (
+          {displayImages.length > 1 && (
+            <div className="thumbnails-grid mt-4" style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.5rem', scrollBehavior: 'smooth' }}>
+              {displayImages.map((img, i) => (
                 <div 
                   key={i} 
-                  className={`thumbnail-item ${selectedImg === img ? 'active' : ''}`}
-                  onClick={() => setSelectedImg(img)}
+                  className={`thumbnail-item ${currentIndex === i ? 'active' : ''}`}
+                  onClick={() => setCurrentIndex(i)}
+                  style={{ flex: '0 0 auto', width: '80px', height: '60px', borderRadius: '8px', overflow: 'hidden', cursor: 'pointer', border: currentIndex === i ? '2px solid var(--color-primary-gold)' : '2px solid transparent', transition: 'all 0.2s' }}
                 >
                   <img 
                     src={img} 
-                    alt={`${room.name} view ${i + 1}`} 
+                    alt={`${room.name} thumbnail ${i + 1}`} 
                     loading="lazy"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onLoad={(e) => e.target.classList.add('loaded')}
                     onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
                   />

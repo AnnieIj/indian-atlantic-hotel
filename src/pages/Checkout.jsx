@@ -32,6 +32,42 @@ const Checkout = () => {
 
   const [paymentMethod, setPaymentMethod] = useState('Bank Transfer');
   const [receipt, setReceipt] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadMessage, setUploadMessage] = useState('');
+
+  const handleReceiptUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
+      setUploadMessage('Invalid format. Please upload JPG, PNG, WEBP, or PDF.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadMessage('File size exceeds 5MB limit.');
+      return;
+    }
+    
+    setUploadMessage('');
+    setUploadProgress(10);
+    setReceipt(null);
+    
+    let currentProgress = 10;
+    const interval = setInterval(() => {
+      currentProgress += 30;
+      if (currentProgress >= 100) {
+        clearInterval(interval);
+        setUploadProgress(100);
+        setTimeout(() => {
+          setReceipt(file);
+          setUploadProgress(0);
+        }, 500);
+      } else {
+        setUploadProgress(currentProgress);
+      }
+    }, 200);
+  };
 
   if (!room || !checkIn || !checkOut) return <div className="pt-32 text-center">Invalid booking details.</div>;
 
@@ -165,13 +201,26 @@ const Checkout = () => {
                         type="file" 
                         id="receipt" 
                         className="hidden" 
-                        onChange={(e) => setReceipt(e.target.files[0])}
-                        accept="image/*,.pdf"
+                        onChange={handleReceiptUpload}
+                        accept="image/jpeg,image/png,image/webp,.pdf"
                       />
-                      <label htmlFor="receipt" className="upload-label">
-                        {receipt ? receipt.name : 'Choose file or drag & drop'}
+                      <label htmlFor="receipt" className="upload-label" style={{ display: 'block', padding: '1rem', border: '1px dashed #ccc', textAlign: 'center', cursor: 'pointer', borderRadius: '8px' }}>
+                        {receipt ? (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: '#10b981' }}>
+                            <CheckCircle size={16} />
+                            <span>{receipt.name}</span>
+                          </div>
+                        ) : 'Choose file or drag & drop'}
                       </label>
                     </div>
+                    {uploadProgress > 0 && (
+                      <div style={{ marginTop: '0.5rem', width: '100%', height: '4px', background: '#e2e8f0', borderRadius: '2px' }}>
+                        <div style={{ width: `${uploadProgress}%`, height: '100%', background: '#10b981', transition: 'width 0.2s' }}></div>
+                      </div>
+                    )}
+                    {uploadMessage && (
+                      <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.5rem' }}>{uploadMessage}</p>
+                    )}
                   </div>
                   
                   <p className="payment-note mt-4">

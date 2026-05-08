@@ -117,12 +117,6 @@ export const generateRooms = () => {
         capacity: config.capacity,
         status: num % 7 === 0 ? 'booked' : num % 13 === 0 ? 'maintenance' : 'available',
         image: selectedImage,
-        images: [
-          selectedImage,
-          allImages[(imgIndex + 1) % allImages.length],
-          allImages[(imgIndex + 2) % allImages.length],
-          allImages[(imgIndex + 3) % allImages.length]
-        ],
         description: config.description,
         amenities: config.amenities
       });
@@ -143,7 +137,7 @@ export const mockRooms = [
 export const mockUsers = [
   { id: 'u1', name: 'John Doe', email: 'john@example.com', phone: '08012345678', role: 'guest' },
   { id: 'u2', name: 'Ada Okafor', email: 'ada@example.com', phone: '08087654321', role: 'guest' },
-  { id: 'admin1', name: 'Hotel Admin', email: 'admin@gmail.com', password: 'admin123', role: 'admin' }
+  { id: 'admin1', name: 'Hotel Admin', email: 'indianatlantichotel@gmail.com', password: 'indiana##', role: 'admin' }
 ];
 
 export const mockBookings = [

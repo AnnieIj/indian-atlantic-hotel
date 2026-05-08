@@ -17,7 +17,7 @@ const AdminLogin = () => {
     if (res.success && res.user.role === 'admin') {
       navigate('/admin/dashboard');
     } else {
-      setError('Invalid admin credentials. Use admin@gmail.com / admin123');
+      setError('Invalid admin credentials.');
     }
   };
 

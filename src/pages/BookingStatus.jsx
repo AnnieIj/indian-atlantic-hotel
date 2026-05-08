@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { CheckCircle, Clock, XCircle, ArrowLeft, RefreshCw } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, ArrowLeft, RefreshCw, Hash, BedDouble, User, CreditCard, CalendarDays, CalendarCheck } from 'lucide-react';
 
 const BookingStatus = () => {
   const { bookingId } = useParams();
@@ -108,32 +108,85 @@ const BookingStatus = () => {
 
         {renderStatus()}
 
-        <div className="booking-details-card mt-8 glass-panel p-8">
-          <h3 className="border-b pb-4 mb-6">Booking Details</h3>
-          <div className="grid grid-cols-2 gap-y-6">
-            <div>
-              <p className="text-xs uppercase tracking-wider text-muted font-bold">Booking ID</p>
-              <p className="font-semibold text-navy">#{booking.id}</p>
+        <div className="mt-8 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden border border-gray-100">
+          <div className="bg-[#f8fafc] px-8 py-5 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="m-0 text-[#1e293b] font-bold text-xl flex items-center gap-2">
+              <span style={{ fontSize: '1.4rem' }}>✨</span> Booking Summary
+            </h3>
+            <span className="bg-[#fef3c7] text-[#92400e] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+              {booking.status}
+            </span>
+          </div>
+          
+          <div className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Card item */}
+              <div className="flex items-start gap-4 p-4 rounded-xl bg-[#f8fafc] hover:bg-[#f1f5f9] transition-colors border border-transparent hover:border-gray-200">
+                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                  <Hash size={18} />
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-[#64748b] font-bold mb-1">Booking ID</p>
+                  <p className="font-bold text-[#1e293b]">#{booking.id}</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 p-4 rounded-xl bg-[#f8fafc] hover:bg-[#f1f5f9] transition-colors border border-transparent hover:border-gray-200">
+                <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                  <BedDouble size={18} />
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-[#64748b] font-bold mb-1">Room</p>
+                  <p className="font-bold text-[#1e293b]">{booking.roomName}</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 p-4 rounded-xl bg-[#f8fafc] hover:bg-[#f1f5f9] transition-colors border border-transparent hover:border-gray-200">
+                <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                  <User size={18} />
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-[#64748b] font-bold mb-1">Guest Name</p>
+                  <p className="font-bold text-[#1e293b]">{booking.guestName}</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 p-4 rounded-xl bg-[#f8fafc] hover:bg-[#f1f5f9] transition-colors border border-transparent hover:border-gray-200">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                  <CreditCard size={18} />
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-[#64748b] font-bold mb-1">Amount Paid</p>
+                  <p className="font-black text-[#10b981] text-lg">₦{(booking.totalAmount || booking.totalPrice || 0).toLocaleString()}</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 p-4 rounded-xl bg-[#f8fafc] hover:bg-[#f1f5f9] transition-colors border border-transparent hover:border-gray-200">
+                <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                  <CalendarDays size={18} />
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-[#64748b] font-bold mb-1">Check-in</p>
+                  <p className="font-bold text-[#1e293b]">{booking.checkIn}</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 p-4 rounded-xl bg-[#f8fafc] hover:bg-[#f1f5f9] transition-colors border border-transparent hover:border-gray-200">
+                <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                  <CalendarCheck size={18} />
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-[#64748b] font-bold mb-1">Check-out</p>
+                  <p className="font-bold text-[#1e293b]">{booking.checkOut}</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-xs uppercase tracking-wider text-muted font-bold">Room</p>
-              <p className="font-semibold text-navy">{booking.roomName}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wider text-muted font-bold">Guest Name</p>
-              <p className="font-semibold text-navy">{booking.guestName}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wider text-muted font-bold">Amount Paid</p>
-              <p className="font-semibold text-gold">₦{booking.totalAmount.toLocaleString()}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wider text-muted font-bold">Check-in</p>
-              <p className="font-semibold text-navy">{booking.checkIn}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wider text-muted font-bold">Check-out</p>
-              <p className="font-semibold text-navy">{booking.checkOut}</p>
+            
+            <div className="mt-8 pt-6 border-t border-dashed border-gray-200 text-center">
+              <p className="text-sm text-[#64748b] italic">
+                A copy of these details has been sent to your email.
+              </p>
             </div>
           </div>
         </div>
