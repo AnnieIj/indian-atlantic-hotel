@@ -1,37 +1,30 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { SlidersHorizontal } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import { Calendar, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import './Rooms.css';
 
 const Rooms = () => {
-  const { rooms, checkAvailability } = useContext(AppContext);
-  const location = useLocation();
   const navigate = useNavigate();
-  
+  const { rooms, loading, fetchRooms } = useContext(AppContext);
+
   const [filter, setFilter] = useState('All');
   const [maxPrice, setMaxPrice] = useState(150000);
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  
-  const filteredRooms = rooms.filter(r => {
-    // Category Filter
-    const categoryMatch = filter === 'All' || r.type === filter;
-    
-    // Price Filter
-    const priceMatch = r.price <= maxPrice;
-    
-    // Date Filter
-    let dateMatch = true;
-    if (startDate && endDate) {
-      dateMatch = checkAvailability(r.id, startDate, endDate);
+
+  useEffect(() => {
+    // Only fetch if rooms haven't loaded yet (AppContext fetches on mount,
+    // but this is a fallback for direct navigation to /rooms)
+    if (rooms.length === 0) {
+      fetchRooms();
     }
-    
-    return categoryMatch && priceMatch && dateMatch;
+  }, []);
+
+  const filteredRooms = rooms.filter(r => {
+    const categoryMatch = filter === 'All' || r.type === filter;
+    const priceMatch = r.price <= maxPrice;
+    return categoryMatch && priceMatch;
   });
 
   const types = ['All', 'Suite', 'Double Executive', 'Executive', 'Super Deluxe', 'Deluxe', 'Standard'];
@@ -40,77 +33,38 @@ const Rooms = () => {
     <main className="rooms-page bg-light" style={{ minHeight: '80vh' }}>
       <div className="container pt-32 pb-12">
         <div className="rooms-header mb-8">
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem'}}>
-            <h2 style={{margin: 0}}>Find Your Perfect Room</h2>
-            <button 
-              className="btn btn-outline" 
-              style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-            >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h2>Find Your Perfect Room</h2>
+            <button className="btn btn-outline" onClick={() => setIsFilterOpen(!isFilterOpen)}>
               <SlidersHorizontal size={18} /> Filters
             </button>
           </div>
 
-          {/* Advanced Filters Panel */}
           {isFilterOpen && (
-            <motion.div 
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="glass-panel" 
-              style={{ padding: '1.5rem', marginBottom: '2rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', alignItems: 'end' }}
-            >
-              <div className="filter-group">
-                <label style={{display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.9rem'}}>Price Range (Up to ₦{maxPrice.toLocaleString()})</label>
-                <input 
-                  type="range" 
-                  min="20000" 
-                  max="150000" 
-                  step="5000" 
-                  value={maxPrice} 
-                  onChange={(e) => setMaxPrice(parseInt(e.target.value))}
-                  style={{width: '100%', accentColor: 'var(--color-primary-navy)'}}
-                />
-              </div>
-
-              <div className="filter-group">
-                <label style={{display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.9rem'}}>Check-In Date</label>
-                <div className="input-wrapper" style={{background: '#fff', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                  <Calendar size={16} color="var(--color-primary-gold)" />
-                  <DatePicker
-                    selected={startDate}
-                    onChange={(date) => setStartDate(date)}
-                    placeholderText="Select Date"
-                    minDate={new Date()}
-                    className="custom-datepicker"
-                    style={{border: 'none', width: '100%'}}
-                  />
-                </div>
-              </div>
-
-              <div className="filter-group">
-                <label style={{display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.9rem'}}>Check-Out Date</label>
-                <div className="input-wrapper" style={{background: '#fff', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                  <Calendar size={16} color="var(--color-primary-gold)" />
-                  <DatePicker
-                    selected={endDate}
-                    onChange={(date) => setEndDate(date)}
-                    placeholderText="Select Date"
-                    minDate={startDate || new Date()}
-                    className="custom-datepicker"
-                  />
-                </div>
-              </div>
-
-              <button className="btn btn-primary" onClick={() => {setStartDate(null); setEndDate(null); setMaxPrice(150000); setFilter('All');}}>
-                Reset All
+            <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+              <label>Price Range: ₦{maxPrice.toLocaleString()}</label>
+              <input
+                type="range"
+                min="20000"
+                max="150000"
+                step="5000"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(Number(e.target.value))}
+                style={{ width: '100%', marginTop: '1rem' }}
+              />
+              <button
+                className="btn btn-primary mt-3"
+                onClick={() => { setFilter('All'); setMaxPrice(150000); }}
+              >
+                Reset Filters
               </button>
-            </motion.div>
+            </div>
           )}
 
           <div className="tabs mt-4">
             {types.map(t => (
-              <button 
-                key={t} 
+              <button
+                key={t}
                 className={`tab ${filter === t ? 'active' : ''}`}
                 onClick={() => setFilter(t)}
               >
@@ -119,49 +73,70 @@ const Rooms = () => {
             ))}
           </div>
         </div>
-        
-        <div className="rooms-grid">
-          {filteredRooms.length > 0 ? (
-            filteredRooms.map((room, index) => (
-              <motion.div 
-                key={room.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
-                className="room-card"
-              >
-                <img 
-                  src={room.image} 
-                  alt={room.name} 
-                  className="room-img" 
-                  loading="lazy" 
-                  onLoad={(e) => e.target.classList.add('loaded')}
-                />
-                <div className="room-info">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3>{room.name}</h3>
-                    <span className={`badge ${room.status === 'available' ? 'badge-success' : room.status === 'booked' ? 'badge-danger' : 'badge-warning'}`}>
-                      {room.status}
+
+        {loading ? (
+          <p style={{ textAlign: "center", padding: '3rem' }}>Loading rooms from server...</p>
+        ) : (
+          <div className="rooms-grid">
+            {filteredRooms.length === 0 ? (
+              <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '4rem' }}>
+                <h3>No rooms match your search</h3>
+              </div>
+            ) : (
+              filteredRooms.map((room, index) => (
+                <motion.div
+                  key={room.id || index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="room-card"
+                >
+                  <div style={{ position: 'relative' }}>
+                    <img
+                      src={room.image || 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=800&q=80'}
+                      alt={room.name}
+                      className="room-img"
+                      style={{ objectFit: 'cover', height: '250px', width: '100%' }}
+                    />
+                    <span 
+                      style={{
+                        position: 'absolute', top: '10px', right: '10px', 
+                        padding: '0.3rem 0.8rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold',
+                        backgroundColor: room.status === 'available' ? '#10b981' : room.status === 'booked' ? '#ef4444' : '#f59e0b',
+                        color: 'white'
+                      }}
+                    >
+                      {room.status ? room.status.toUpperCase() : 'UNKNOWN'}
                     </span>
                   </div>
-                  <p className="price">₦{room.price.toLocaleString()} <span>/ Night</span></p>
-                  <p className="desc text-muted">{room.description}</p>
-                  <button 
-                    className="btn btn-secondary w-full mt-4" 
-                    onClick={() => navigate(`/room/${room.id}`)}
-                  >
-                    View Details
-                  </button>
-                </div>
-              </motion.div>
-            ))
-          ) : (
-            <div style={{gridColumn: '1/-1', textAlign: 'center', padding: '4rem', background: '#fff', borderRadius: '12px'}}>
-              <h3>No rooms found matching your criteria.</h3>
-              <p>Try adjusting your filters or dates.</p>
-            </div>
-          )}
-        </div>
+
+                  <div className="room-info" style={{ padding: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{room.name}</h3>
+                      <span style={{ fontSize: '0.85rem', color: '#64748b', backgroundColor: '#f1f5f9', padding: '0.2rem 0.6rem', borderRadius: '4px' }}>
+                        {room.type || 'Standard'}
+                      </span>
+                    </div>
+
+                    <p style={{ fontWeight: "bold", color: 'var(--color-primary-navy)', fontSize: '1.1rem', margin: '0.5rem 0' }}>
+                      ₦{room.price?.toLocaleString()} <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 'normal' }}>/ Night</span>
+                    </p>
+
+                    <p className="desc" style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {room.description || "No description available"}
+                    </p>
+
+                    <button
+                      className="btn btn-secondary w-full"
+                      onClick={() => navigate(`/room/${room.id}`)}
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </main>
   );

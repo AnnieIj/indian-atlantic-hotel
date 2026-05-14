@@ -4,13 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Users, ChevronRight, ChevronLeft, Star, Wifi, Zap, Coffee, Utensils, ShieldCheck, MapPin, Plus, X, ChevronDown } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { mockRooms } from '../data/mockData';
 import { AppContext } from '../context/AppContext';
 import './Home.css';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { testimonials, addTestimonial } = useContext(AppContext);
+  const { testimonials, addTestimonial, rooms } = useContext(AppContext);
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
   const [guests, setGuests] = useState('1');
@@ -201,7 +200,7 @@ const Home = () => {
           </motion.div>
 
           <div className="rooms-grid" style={{ marginTop: '3rem' }}>
-            {mockRooms.slice(0, 3).map((room, idx) => (
+            {rooms.slice(0, 3).map((room, idx) => (
               <motion.div key={room.id} className="room-card" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.2 }}>
                 <img
                   src={room.image}

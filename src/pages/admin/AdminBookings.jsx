@@ -1,10 +1,14 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { AppContext } from '../../context/AppContext';
 import { Search, CheckCircle, LogOut, XCircle } from 'lucide-react';
 
 const AdminBookings = () => {
-  const { bookings, rooms, updateBookingStatus } = useContext(AppContext);
+  const { bookings, rooms, updateBookingStatus, fetchBookings } = useContext(AppContext);
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    fetchBookings();
+  }, []);
 
   const filteredBookings = bookings.filter(b => {
     const room = rooms.find(r => r.id === b.roomId);
@@ -53,6 +57,7 @@ const AdminBookings = () => {
               <th>Room</th>
               <th>Dates</th>
               <th>Total</th>
+              <th>Code</th>
               <th>Receipt</th>
               <th>Status</th>
               <th>Actions</th>
@@ -62,28 +67,43 @@ const AdminBookings = () => {
             {filteredBookings.length > 0 ? (
               filteredBookings.slice().reverse().map(booking => {
                 const room = rooms.find(r => r.id === booking.roomId);
+                const receiptUrl = typeof booking.receipt === 'string' ? booking.receipt : booking.receipt?.url;
+                
                 return (
                   <tr key={booking.id}>
-                    <td style={{fontSize: '0.8rem', color: '#64748b'}}>#{booking.id}</td>
+                    <td style={{fontSize: '0.8rem', color: '#64748b'}}>#{booking.id.substring(0, 8)}</td>
                     <td>
                       <div style={{fontWeight: 500}}>{booking.guestName || 'Guest'}</div>
                       <div style={{fontSize: '0.8rem', color: '#64748b'}}>{booking.guestEmail}</div>
                     </td>
-                    <td>{room?.name}</td>
+                    <td>{room?.name || booking.roomId}</td>
                     <td>
                       <div style={{fontSize: '0.9rem'}}>{new Date(booking.checkIn).toLocaleDateString()} -</div>
                       <div style={{fontSize: '0.9rem'}}>{new Date(booking.checkOut).toLocaleDateString()}</div>
                     </td>
                     <td style={{fontWeight: 600}}>₦{(booking.totalAmount || booking.totalPrice || 0).toLocaleString()}</td>
                     <td>
-                      {booking.receipt ? (
+                      <div style={{
+                        fontFamily: 'monospace',
+                        fontSize: '1.1rem',
+                        fontWeight: 700,
+                        color: '#1e293b',
+                        letterSpacing: '2px'
+                      }}>
+                        {booking.confirmationCode || 'N/A'}
+                      </div>
+                    </td>
+                    <td>
+                      {receiptUrl ? (
                         <img 
-                          src="https://images.unsplash.com/photo-1554224155-1696413565d3?auto=format&fit=crop&q=80&w=200" 
+                          src={receiptUrl} 
                           alt="Receipt" 
                           style={{ width: '50px', height: '50px', borderRadius: '4px', cursor: 'pointer', objectFit: 'cover' }}
-                          onClick={() => window.open('https://images.unsplash.com/photo-1554224155-1696413565d3?auto=format&fit=crop&q=80&w=800', '_blank')}
+                          onClick={() => window.open(receiptUrl, '_blank')}
+                          onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
                         />
                       ) : '-'}
+                      {receiptUrl && <a href={receiptUrl} target="_blank" rel="noreferrer" style={{display: 'none', fontSize: '0.75rem'}}>View File</a>}
                     </td>
                     <td>
                       <span className={`badge ${getStatusBadge(booking.status)}`}>
@@ -104,8 +124,8 @@ const AdminBookings = () => {
                         {booking.status === 'checked-in' && (
                           <button className="btn btn-outline" style={{padding: '0.4rem 0.8rem', fontSize: '0.75rem'}} onClick={() => updateBookingStatus(booking.id, 'checked-out')}>Check Out</button>
                         )}
-                        {booking.receipt && (
-                           <button className="btn btn-outline" style={{padding: '0.4rem 0.8rem', fontSize: '0.75rem'}} onClick={() => window.open('https://images.unsplash.com/photo-1554224155-1696413565d3?auto=format&fit=crop&q=80&w=800', '_blank')}>Receipt</button>
+                        {receiptUrl && (
+                           <button className="btn btn-outline" style={{padding: '0.4rem 0.8rem', fontSize: '0.75rem'}} onClick={() => window.open(receiptUrl, '_blank')}>Receipt</button>
                         )}
                       </div>
                     </td>
@@ -114,7 +134,7 @@ const AdminBookings = () => {
               })
             ) : (
               <tr>
-                <td colSpan="7" style={{textAlign: 'center', padding: '3rem', color: '#94a3b8'}}>No bookings found</td>
+                <td colSpan="9" style={{textAlign: 'center', padding: '3rem', color: '#94a3b8'}}>No bookings found</td>
               </tr>
             )}
           </tbody>

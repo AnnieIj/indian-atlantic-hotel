@@ -1,25 +1,36 @@
-import React, { useContext, useState, useRef } from 'react';
+import React, { useContext, useState, useRef, useEffect } from 'react';
 import { AppContext } from '../../context/AppContext';
+import { api } from '../../services/api';
 import { X, Save, Edit3, ImagePlus, Trash2 } from 'lucide-react';
 
 const MAX_IMAGES = 4;
 
 const AdminRooms = () => {
-  const { rooms, updateRoom } = useContext(AppContext);
+  const { rooms, updateRoom, fetchRooms } = useContext(AppContext);
   const [editingRoom, setEditingRoom] = useState(null);
   const [formData, setFormData] = useState({ price: 0, status: '' });
-  const [previewImages, setPreviewImages] = useState([]); // array of base64 strings
+  const [previewImages, setPreviewImages] = useState([]); // array of remote URLs
+  const [newFiles, setNewFiles] = useState([]); // array of File objects
   const [isDragging, setIsDragging] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadMessage, setUploadMessage] = useState({ type: '', text: '' });
   const fileInputRef = useRef(null);
 
-  const handleEdit = (room) => {
+  const handleEdit = async (room) => {
     setEditingRoom(room);
     setFormData({ price: room.price, status: room.status });
-    setPreviewImages(room.images || []);
     setUploadMessage({ type: '', text: '' });
     setUploadProgress(0);
+    setNewFiles([]);
+    
+    // Fetch gallery for the room
+    try {
+      const gallery = await api.get(`/rooms/${room.id}/gallery`);
+      // Assuming gallery returns an array of objects like { id, url } or just string URLs
+      setPreviewImages(gallery || []);
+    } catch (error) {
+      setPreviewImages(room.images ? room.images : (room.image ? [{url: room.image}] : []));
+    }
   };
 
   const processFiles = (files) => {
@@ -43,42 +54,14 @@ const AdminRooms = () => {
       setUploadMessage({ type: 'error', text: `Failed: ${invalidFiles.join(', ')}` });
     }
 
-    const remaining = MAX_IMAGES - previewImages.length;
+    const currentTotal = previewImages.length + newFiles.length;
+    const remaining = MAX_IMAGES - currentTotal;
     if (remaining <= 0) return;
 
     const toRead = validFiles.slice(0, remaining);
     if (toRead.length === 0) return;
 
-    setUploadProgress(10);
-    let currentProgress = 10;
-    const interval = setInterval(() => {
-      currentProgress += 30;
-      if (currentProgress >= 100) {
-        clearInterval(interval);
-        setUploadProgress(100);
-        
-        let loadedCount = 0;
-        toRead.forEach(file => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setPreviewImages(prev => {
-              if (prev.length >= MAX_IMAGES) return prev;
-              return [...prev, reader.result];
-            });
-            loadedCount++;
-            if (loadedCount === toRead.length) {
-              setTimeout(() => {
-                setUploadProgress(0);
-                setUploadMessage({ type: 'success', text: `Successfully uploaded ${loadedCount} image(s)` });
-              }, 500);
-            }
-          };
-          reader.readAsDataURL(file);
-        });
-      } else {
-        setUploadProgress(currentProgress);
-      }
-    }, 200);
+    setNewFiles(prev => [...prev, ...toRead]);
   };
 
   const handleImageUpload = (e) => {
@@ -104,26 +87,58 @@ const AdminRooms = () => {
     processFiles(files);
   };
 
-  const handleRemoveImage = (index) => {
-    setPreviewImages(prev => prev.filter((_, i) => i !== index));
+  const handleRemoveExistingImage = async (imageUrl) => {
+    try {
+      await api.delete(`/rooms/${editingRoom.id}/images?imageUrl=${encodeURIComponent(imageUrl)}`);
+      setPreviewImages(prev => prev.filter(img => (img.url || img) !== imageUrl));
+      await fetchRooms(); // Refresh rooms to ensure main image is updated
+    } catch (error) {
+      setUploadMessage({ type: 'error', text: 'Failed to delete image' });
+    }
   };
 
-  const handleSave = () => {
-    const updatedData = {
-      ...formData,
-      images: previewImages,
-      // Also update the main image to the first uploaded one if any
-      ...(previewImages.length > 0 ? { image: previewImages[0] } : {})
-    };
-    updateRoom(editingRoom.id, updatedData);
-    setEditingRoom(null);
+  const handleRemoveNewFile = (index) => {
+    setNewFiles(prev => prev.filter((_, i) => i !== index));
   };
+
+  const handleSave = async () => {
+    try {
+      setUploadProgress(10);
+      // 1. Update room details
+      await updateRoom(editingRoom.id, formData);
+      setUploadProgress(50);
+      
+      // 2. Upload new images if any
+      if (newFiles.length > 0) {
+        const uploadData = new FormData();
+        newFiles.forEach(file => {
+          uploadData.append('images', file);
+        });
+        
+        await api.post(`/rooms/${editingRoom.id}/images`, uploadData, true);
+      }
+      
+      setUploadProgress(100);
+      setTimeout(() => {
+        setEditingRoom(null);
+        fetchRooms();
+      }, 500);
+    } catch (error) {
+      setUploadProgress(0);
+      setUploadMessage({ type: 'error', text: error.message || 'Failed to save changes' });
+    }
+  };
+
+  const combinedImages = [
+    ...previewImages.map(img => ({ type: 'existing', url: img.url || img })),
+    ...newFiles.map(file => ({ type: 'new', url: URL.createObjectURL(file), file }))
+  ];
 
   return (
     <div className="admin-table-container">
       <div style={{padding: '1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
         <h3 style={{margin: 0, color: 'var(--color-primary-navy)'}}>Room Inventory</h3>
-        <span className="badge badge-info">Total: {rooms.length}/28</span>
+        <span className="badge badge-info">Total: {rooms.length}</span>
       </div>
       <div style={{overflowX: 'auto'}}>
         <table className="admin-table">
@@ -141,7 +156,7 @@ const AdminRooms = () => {
           <tbody>
             {rooms.map(room => (
               <tr key={room.id}>
-                <td><img src={room.image} alt={room.name} style={{width: '60px', height: '40px', objectFit: 'cover', borderRadius: '4px'}} /></td>
+                <td><img src={room.image || 'https://via.placeholder.com/60x40?text=No+Image'} alt={room.name} style={{width: '60px', height: '40px', objectFit: 'cover', borderRadius: '4px'}} /></td>
                 <td>{room.name}</td>
                 <td>{room.type}</td>
                 <td>{room.capacity}</td>
@@ -205,68 +220,87 @@ const AdminRooms = () => {
                   Room Gallery Images
                 </label>
                 <span style={{fontSize: '0.75rem', color: '#94a3b8', background: '#f1f5f9', padding: '0.2rem 0.6rem', borderRadius: '99px'}}>
-                  {previewImages.length} / {MAX_IMAGES}
+                  {combinedImages.length} / {MAX_IMAGES}
                 </span>
               </div>
 
               {/* Image Preview Grid */}
               <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '0.75rem'}}>
-                {Array.from({ length: MAX_IMAGES }).map((_, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      aspectRatio: '1',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      border: previewImages[i] ? '2px solid var(--color-primary-gold)' : '2px dashed #cbd5e1',
-                      background: previewImages[i] ? 'transparent' : '#f8fafc',
-                      position: 'relative',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {previewImages[i] ? (
-                      <>
-                        <img
-                          src={previewImages[i]}
-                          alt={`Room image ${i + 1}`}
-                          style={{width: '100%', height: '100%', objectFit: 'cover'}}
-                        />
-                        <button
-                          onClick={() => handleRemoveImage(i)}
-                          style={{
-                            position: 'absolute', top: '4px', right: '4px',
-                            background: 'rgba(239,68,68,0.9)', color: '#fff',
-                            border: 'none', borderRadius: '50%',
-                            width: '22px', height: '22px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-                          }}
-                          title="Remove image"
-                        >
-                          <Trash2 size={11} />
-                        </button>
-                        {i === 0 && (
-                          <span style={{
-                            position: 'absolute', bottom: '4px', left: '4px',
-                            background: 'var(--color-primary-gold)', color: '#fff',
-                            fontSize: '0.6rem', fontWeight: 700, padding: '1px 5px',
-                            borderRadius: '4px', textTransform: 'uppercase'
-                          }}>Main</span>
-                        )}
-                      </>
-                    ) : (
-                      <span style={{fontSize: '0.65rem', color: '#94a3b8', textAlign: 'center', padding: '0.25rem'}}>
-                        Slot {i + 1}
-                      </span>
-                    )}
-                  </div>
-                ))}
+                {Array.from({ length: MAX_IMAGES }).map((_, i) => {
+                  const img = combinedImages[i];
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        aspectRatio: '1',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        border: img ? '2px solid var(--color-primary-gold)' : '2px dashed #cbd5e1',
+                        background: img ? 'transparent' : '#f8fafc',
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {img ? (
+                        <>
+                          <img
+                            src={img.url}
+                            alt={`Room image ${i + 1}`}
+                            style={{width: '100%', height: '100%', objectFit: 'cover', opacity: img.type === 'new' ? 0.7 : 1}}
+                          />
+                          <button
+                            onClick={() => {
+                              if (img.type === 'existing') {
+                                handleRemoveExistingImage(img.url);
+                              } else {
+                                // Find index in newFiles
+                                const newFileIndex = newFiles.findIndex(f => f === img.file);
+                                handleRemoveNewFile(newFileIndex);
+                              }
+                            }}
+                            style={{
+                              position: 'absolute', top: '4px', right: '4px',
+                              background: 'rgba(239,68,68,0.9)', color: '#fff',
+                              border: 'none', borderRadius: '50%',
+                              width: '22px', height: '22px',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+                            }}
+                            title="Remove image"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                          {i === 0 && (
+                            <span style={{
+                              position: 'absolute', bottom: '4px', left: '4px',
+                              background: 'var(--color-primary-gold)', color: '#fff',
+                              fontSize: '0.6rem', fontWeight: 700, padding: '1px 5px',
+                              borderRadius: '4px', textTransform: 'uppercase'
+                            }}>Main</span>
+                          )}
+                          {img.type === 'new' && (
+                            <span style={{
+                              position: 'absolute', top: '4px', left: '4px',
+                              background: '#3b82f6', color: '#fff',
+                              fontSize: '0.5rem', fontWeight: 700, padding: '1px 4px',
+                              borderRadius: '3px', textTransform: 'uppercase'
+                            }}>New</span>
+                          )}
+                        </>
+                      ) : (
+                        <span style={{fontSize: '0.65rem', color: '#94a3b8', textAlign: 'center', padding: '0.25rem'}}>
+                          Slot {i + 1}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Upload Button & Area */}
-              {previewImages.length < MAX_IMAGES && (
+              {combinedImages.length < MAX_IMAGES && (
                 <div
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -310,7 +344,7 @@ const AdminRooms = () => {
                       Browse Files
                     </button>
                     <p style={{fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.5rem', textAlign: 'center'}}>
-                      Supports JPG, PNG, WEBP (Max 5MB). {MAX_IMAGES - previewImages.length} slot{MAX_IMAGES - previewImages.length !== 1 ? 's' : ''} remaining.
+                      Supports JPG, PNG, WEBP (Max 5MB). {MAX_IMAGES - combinedImages.length} slot{MAX_IMAGES - combinedImages.length !== 1 ? 's' : ''} remaining.
                     </p>
                   </div>
                 </div>
@@ -322,7 +356,7 @@ const AdminRooms = () => {
                   <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ width: `${uploadProgress}%`, height: '100%', background: 'var(--color-primary-gold)', transition: 'width 0.2s ease' }} />
                   </div>
-                  <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem', textAlign: 'right' }}>Uploading... {uploadProgress}%</p>
+                  <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem', textAlign: 'right' }}>Saving... {uploadProgress}%</p>
                 </div>
               )}
               

@@ -80,18 +80,12 @@ const Checkout = () => {
     
     const bookingData = {
       roomId: room.id,
-      roomName: room.name,
       checkIn,
       checkOut,
       guestName: `${formData.firstName} ${formData.lastName}`,
       guestEmail: formData.email,
       guestPhone: formData.phone,
       paymentMethod,
-      receipt: receipt ? receipt.name : null,
-      status: paymentMethod === 'Bank Transfer' ? 'pending' : 'confirmed',
-      paymentStatus: paymentMethod === 'Bank Transfer' ? 'pending' : 'success',
-      totalPrice: total,
-      totalAmount: total,
     };
     
     const res = await createBooking(bookingData);

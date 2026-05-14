@@ -1,14 +1,19 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { AppContext } from '../../context/AppContext';
 import { CreditCard, CheckCircle, XCircle, Eye, AlertTriangle, Clock, FileText } from 'lucide-react';
 
 const AdminPayments = () => {
-  const { payments, setPayments, bookings, updateBookingStatus } = useContext(AppContext);
+  const { payments, bookings, confirmPayment, fetchPayments, fetchBookings } = useContext(AppContext);
   const [actionPayment, setActionPayment] = useState(null); // payment being acted on
   const [actionType, setActionType] = useState(''); // 'approve' or 'reject'
   const [adminNotes, setAdminNotes] = useState('');
   const [toast, setToast] = useState(null); // { type: 'success'|'error', msg }
   const [receiptModal, setReceiptModal] = useState(null); // receipt data URL or URL to view
+
+  useEffect(() => {
+    fetchPayments();
+    fetchBookings();
+  }, []);
 
   const pendingPayments = payments.filter(p => p.status === 'pending' && p.receipt);
   const allPayments = payments.slice().reverse();
@@ -24,23 +29,11 @@ const AdminPayments = () => {
     setAdminNotes('');
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!actionPayment) return;
     const newStatus = actionType === 'approve' ? 'success' : 'failed';
 
-    // Update payment status
-    setPayments(prev => prev.map(p =>
-      p.id === actionPayment.id
-        ? { ...p, status: newStatus, adminNotes, reviewedAt: new Date().toISOString() }
-        : p
-    ));
-
-    // Update linked booking status
-    if (actionType === 'approve') {
-      updateBookingStatus(actionPayment.bookingId, 'confirmed');
-    } else {
-      updateBookingStatus(actionPayment.bookingId, 'cancelled');
-    }
+    await confirmPayment(actionPayment.id, newStatus, adminNotes);
 
     showToast(
       actionType === 'approve' ? 'success' : 'error',
@@ -50,7 +43,7 @@ const AdminPayments = () => {
     );
 
     setActionPayment(null);
-    setActionNotes('');
+    setAdminNotes('');
   };
 
   // Safe cancel
@@ -71,6 +64,10 @@ const AdminPayments = () => {
         {s.icon} {s.label}
       </span>
     );
+  };
+
+  const getReceiptUrl = (receipt) => {
+    return typeof receipt === 'string' ? receipt : receipt?.url;
   };
 
   return (
@@ -105,6 +102,7 @@ const AdminPayments = () => {
           <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {pendingPayments.map(payment => {
               const booking = bookings.find(b => b.id === payment.bookingId);
+              const receiptUrl = getReceiptUrl(payment.receipt);
               return (
                 <div key={payment.id} style={{
                   background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px',
@@ -113,8 +111,8 @@ const AdminPayments = () => {
                 }}>
                   <div>
                     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <span style={{ fontWeight: 700, color: '#1e293b' }}>#{payment.id}</span>
-                      <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Booking #{payment.bookingId}</span>
+                      <span style={{ fontWeight: 700, color: '#1e293b' }}>#{payment.id.substring(0,8)}</span>
+                      <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Booking #{payment.bookingId.substring(0,8)}</span>
                       {statusBadge(payment.status)}
                     </div>
                     <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', fontSize: '0.875rem', color: '#475569' }}>
@@ -122,13 +120,14 @@ const AdminPayments = () => {
                       <span>🏠 {booking?.roomName || booking?.roomId || 'N/A'}</span>
                       <span>👤 {booking?.guestName || 'Guest'}</span>
                       <span>📅 {new Date(payment.createdAt).toLocaleDateString()}</span>
+                      <span style={{color: 'var(--color-primary-navy)', fontWeight: 600}}>🎫 Code: <span style={{fontFamily: 'monospace', letterSpacing: '1px'}}>{booking?.confirmationCode || 'N/A'}</span></span>
                     </div>
-                    {payment.receipt && (
+                    {receiptUrl && (
                       <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <FileText size={14} color="#64748b" />
-                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Receipt uploaded: {payment.receipt}</span>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Receipt uploaded</span>
                         <button
-                          onClick={() => setReceiptModal(payment.receipt)}
+                          onClick={() => window.open(receiptUrl, '_blank')}
                           style={{ background: 'none', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.2rem 0.6rem', fontSize: '0.75rem', color: '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
                         >
                           <Eye size={12} /> View Receipt
@@ -180,38 +179,41 @@ const AdminPayments = () => {
             </thead>
             <tbody>
               {allPayments.length > 0 ? (
-                allPayments.map(payment => (
-                  <tr key={payment.id}>
-                    <td style={{ fontSize: '0.8rem', color: '#64748b' }}>#{payment.id}</td>
-                    <td style={{ fontSize: '0.9rem' }}>#{payment.bookingId}</td>
-                    <td style={{ fontWeight: 600 }}>₦{payment.amount?.toLocaleString()}</td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
-                        <CreditCard size={14} /> {payment.method}
-                      </div>
-                    </td>
-                    <td>
-                      {payment.receipt ? (
-                        <button
-                          onClick={() => setReceiptModal(payment.receipt)}
-                          style={{ background: 'none', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.2rem 0.6rem', fontSize: '0.75rem', color: '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                        >
-                          <Eye size={12} /> View
-                        </button>
-                      ) : <span style={{ color: '#cbd5e1' }}>—</span>}
-                    </td>
-                    <td style={{ fontSize: '0.85rem' }}>{new Date(payment.createdAt).toLocaleDateString()}</td>
-                    <td>{statusBadge(payment.status)}</td>
-                    <td>
-                      {payment.status === 'pending' && (
-                        <div style={{ display: 'flex', gap: '0.4rem' }}>
-                          <button onClick={() => openAction(payment, 'approve')} style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.3rem 0.7rem', fontSize: '0.72rem', cursor: 'pointer', fontWeight: 600 }}>Approve</button>
-                          <button onClick={() => openAction(payment, 'reject')} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.3rem 0.7rem', fontSize: '0.72rem', cursor: 'pointer', fontWeight: 600 }}>Reject</button>
+                allPayments.map(payment => {
+                  const receiptUrl = getReceiptUrl(payment.receipt);
+                  return (
+                    <tr key={payment.id}>
+                      <td style={{ fontSize: '0.8rem', color: '#64748b' }}>#{payment.id.substring(0,8)}</td>
+                      <td style={{ fontSize: '0.9rem' }}>#{payment.bookingId.substring(0,8)}</td>
+                      <td style={{ fontWeight: 600 }}>₦{payment.amount?.toLocaleString()}</td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+                          <CreditCard size={14} /> {payment.method}
                         </div>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td>
+                        {receiptUrl ? (
+                          <button
+                            onClick={() => window.open(receiptUrl, '_blank')}
+                            style={{ background: 'none', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.2rem 0.6rem', fontSize: '0.75rem', color: '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                          >
+                            <Eye size={12} /> View
+                          </button>
+                        ) : <span style={{ color: '#cbd5e1' }}>—</span>}
+                      </td>
+                      <td style={{ fontSize: '0.85rem' }}>{new Date(payment.createdAt).toLocaleDateString()}</td>
+                      <td>{statusBadge(payment.status)}</td>
+                      <td>
+                        {payment.status === 'pending' && (
+                          <div style={{ display: 'flex', gap: '0.4rem' }}>
+                            <button onClick={() => openAction(payment, 'approve')} style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.3rem 0.7rem', fontSize: '0.72rem', cursor: 'pointer', fontWeight: 600 }}>Approve</button>
+                            <button onClick={() => openAction(payment, 'reject')} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.3rem 0.7rem', fontSize: '0.72rem', cursor: 'pointer', fontWeight: 600 }}>Reject</button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })
               ) : (
                 <tr>
                   <td colSpan="8" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>No payment records found</td>
@@ -237,9 +239,16 @@ const AdminPayments = () => {
 
             <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
               {actionType === 'approve'
-                ? `This will confirm payment #${actionPayment.id} and mark booking #${actionPayment.bookingId} as confirmed.`
-                : `This will reject payment #${actionPayment.id} and cancel booking #${actionPayment.bookingId}. The room will become available again.`}
+                ? `This will confirm payment #${actionPayment.id.substring(0,8)} and mark booking #${actionPayment.bookingId.substring(0,8)} as confirmed.`
+                : `This will reject payment #${actionPayment.id.substring(0,8)} and cancel booking #${actionPayment.bookingId.substring(0,8)}. The room will become available again.`}
             </p>
+
+            <div style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
+              <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 700, marginBottom: '0.25rem' }}>Guest Confirmation Code</div>
+              <div style={{ fontFamily: 'monospace', fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-primary-navy)', letterSpacing: '3px' }}>
+                {bookings.find(b => b.id === actionPayment.bookingId)?.confirmationCode || 'N/A'}
+              </div>
+            </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', color: '#374151', marginBottom: '0.5rem' }}>
@@ -273,30 +282,6 @@ const AdminPayments = () => {
                 {actionType === 'approve' ? <><CheckCircle size={16} /> Confirm Approval</> : <><XCircle size={16} /> Confirm Rejection</>}
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ===== RECEIPT VIEWER MODAL ===== */}
-      {receiptModal && (
-        <div
-          onClick={() => setReceiptModal(null)}
-          style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '1rem' }}
-        >
-          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', maxWidth: '600px', width: '100%', maxHeight: '80vh', overflow: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h4 style={{ margin: 0, color: '#1e293b' }}>Payment Receipt</h4>
-              <button onClick={() => setReceiptModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: '1.25rem' }}>✕</button>
-            </div>
-            {receiptModal.startsWith('data:image') ? (
-              <img src={receiptModal} alt="Payment Receipt" style={{ width: '100%', borderRadius: '8px' }} />
-            ) : (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
-                <FileText size={48} style={{ marginBottom: '1rem', opacity: 0.4 }} />
-                <p>Receipt filename: <strong>{receiptModal}</strong></p>
-                <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>File preview not available for this format.</p>
-              </div>
-            )}
           </div>
         </div>
       )}

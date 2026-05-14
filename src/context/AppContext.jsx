@@ -1,13 +1,27 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { generateRooms, mockUsers, mockBookings, mockTestimonials } from '../data/mockData';
+import axios from 'axios';
+
+// Create an Axios instance for clean API integration
+const api = axios.create({
+  baseURL: import.meta.env.DEV ? '/api' : 'https://indian-atlantichotelbackend.onrender.com'
+});
+
+// Intercept requests to attach token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export const AppContext = createContext({
-  rooms: [], setRooms: () => {}, updateRoom: () => {},
-  bookings: [], setBookings: () => {}, updateBookingStatus: () => {}, createBooking: async () => ({}), checkAvailability: () => true,
-  payments: [], setPayments: () => {},
+  rooms: [], setRooms: () => {}, updateRoom: () => {}, fetchRooms: async () => {}, loading: false,
+  bookings: [], setBookings: () => {}, updateBookingStatus: () => {}, createBooking: async () => ({}), checkAvailability: async () => true, fetchBookings: async () => {},
+  payments: [], setPayments: () => {}, fetchPayments: async () => {}, confirmPayment: async () => {},
   users: [], setUsers: () => {},
   testimonials: [], addTestimonial: () => {},
-  currentUser: null, login: () => {}, logout: () => {}
+  currentUser: null, login: async () => {}, logout: () => {}
 });
 
 export const AppProvider = ({ children }) => {
@@ -16,217 +30,164 @@ export const AppProvider = ({ children }) => {
   const [payments, setPayments] = useState([]);
   const [users, setUsers] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null);
-
-  useEffect(() => {
-    // Load from local storage or initialize with mock data
-    // Force reload new inventory and clear old local storage data
-    localStorage.removeItem('iah_rooms');
-    localStorage.removeItem('iah_bookings');
-    setRooms(generateRooms());
-    setBookings(mockBookings);
-    
-    // Initialize mock payments
-    const mockPayments = mockBookings.map(b => ({
-      id: `p${b.id}`,
-      bookingId: b.id,
-      amount: b.totalAmount || b.totalPrice,
-      method: 'Bank Transfer',
-      accountNumber: '5070119651',
-      accountName: 'Indian Atlantic Kitchen 2',
-      bankName: 'Moniepoint',
-      status: 'pending',
-      createdAt: b.createdAt
-    }));
-    setPayments(mockPayments);
-    
-    const localUsers = localStorage.getItem('iah_users');
-    if (localUsers) {
-      let parsedUsers = JSON.parse(localUsers);
-      parsedUsers = parsedUsers.map(u => u.role === 'admin' ? { ...u, email: 'indianatlantichotel@gmail.com' } : u);
-      setUsers(parsedUsers);
-    } else {
-      setUsers(mockUsers);
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('currentUser');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
     }
-    
-    const localTestimonials = localStorage.getItem('iah_testimonials');
-    if (localTestimonials) {
-      setTestimonials(JSON.parse(localTestimonials));
-    } else {
-      setTestimonials(mockTestimonials);
+  });
+  const [loading, setLoading] = useState(false);
+
+  // ── Fetchers ────────────────────────────────────────────
+  const fetchRooms = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get('/rooms');
+      setRooms(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('fetchRooms:', err.message);
+    } finally {
+      setLoading(false);
     }
-    
-    const loggedInUser = localStorage.getItem('iah_currentUser');
-    if (loggedInUser) setCurrentUser(JSON.parse(loggedInUser));
-  }, []);
+  };
 
-  // Save to local storage whenever state changes
-  useEffect(() => {
-    if (rooms.length > 0) localStorage.setItem('iah_rooms', JSON.stringify(rooms));
-  }, [rooms]);
-
-  useEffect(() => {
-    if (bookings.length > 0) localStorage.setItem('iah_bookings', JSON.stringify(bookings));
-  }, [bookings]);
-
-  useEffect(() => {
-    if (payments.length > 0) localStorage.setItem('iah_payments', JSON.stringify(payments));
-  }, [payments]);
-
-  useEffect(() => {
-    if (users.length > 0) localStorage.setItem('iah_users', JSON.stringify(users));
-  }, [users]);
-
-  useEffect(() => {
-    if (testimonials.length > 0) localStorage.setItem('iah_testimonials', JSON.stringify(testimonials));
-  }, [testimonials]);
-
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('iah_currentUser', JSON.stringify(currentUser));
-    } else {
-      localStorage.removeItem('iah_currentUser');
+  const fetchBookings = async () => {
+    try {
+      const { data } = await api.get('/bookings');
+      setBookings(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('fetchBookings:', err.message);
     }
-  }, [currentUser]);
+  };
 
-  // Actions
-  const login = (email, password) => {
-    const user = users.find(u => u.email === email);
-    if (email === 'indianatlantichotel@gmail.com' && password === 'indiana##') {
-      const admin = users.find(u => u.role === 'admin') || { id: 'admin1', name: 'Hotel Admin', email: 'indianatlantichotel@gmail.com', role: 'admin' };
-      setCurrentUser(admin);
-      return { success: true, user: admin };
-    } else if (user) {
-      setCurrentUser(user);
-      return { success: true, user };
+  const fetchPayments = async () => {
+    try {
+      const { data } = await api.get('/payments');
+      setPayments(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('fetchPayments:', err.message);
     }
-    return { success: false, message: 'Invalid credentials' };
+  };
+
+  // ── Auto-load on mount ───────────────────────────────────
+  useEffect(() => {
+    fetchRooms();
+    // Also load admin data if a token already exists (page refresh)
+    if (localStorage.getItem('token')) {
+      fetchBookings();
+      fetchPayments();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Auth ─────────────────────────────────────────────────
+  const login = async (email, password) => {
+    try {
+      const { data } = await api.post('/auth/login', { email, password });
+      const { access_token, user } = data;
+      if (access_token && user?.role === 'admin') {
+        localStorage.setItem('token', access_token);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        setCurrentUser(user);
+        return { success: true, user };
+      }
+      return { success: false, message: 'Access denied. Admins only.' };
+    } catch (err) {
+      return { success: false, message: err.response?.data?.message || 'Invalid credentials' };
+    }
   };
 
   const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('currentUser');
     setCurrentUser(null);
+    setBookings([]);
+    setPayments([]);
   };
 
-  const checkAvailability = (roomId, checkIn, checkOut) => {
-    const checkInDate = new Date(checkIn);
-    const checkOutDate = new Date(checkOut);
-    
-    const overlaps = bookings.some(b => {
-      if (b.roomId !== roomId || b.status === 'cancelled') return false;
-      const bCheckIn = new Date(b.checkIn);
-      const bCheckOut = new Date(b.checkOut);
-      return (checkInDate < bCheckOut && checkOutDate > bCheckIn);
-    });
-    
-    return !overlaps;
+  // ── Rooms ────────────────────────────────────────────────
+  const updateRoom = async (id, data) => {
+    try {
+      await api.patch(`/rooms/${id}`, data);
+      await fetchRooms();
+    } catch (err) {
+      console.error('updateRoom:', err.message);
+    }
   };
 
+  const checkAvailability = async (roomId, checkIn, checkOut) => {
+    try {
+      const { data } = await api.get(`/rooms/${roomId}/availability`, { params: { checkIn, checkOut } });
+      return data.available;
+    } catch (err) {
+      console.error('checkAvailability:', err.message);
+      // If endpoint doesn't exist, allow booking to proceed
+      return true;
+    }
+  };
+
+  // ── Bookings ─────────────────────────────────────────────
   const createBooking = async (bookingData) => {
-    if (!checkAvailability(bookingData.roomId, bookingData.checkIn, bookingData.checkOut)) {
-      return { success: false, message: 'Room is not available for these dates' };
-    }
-    
-    if (bookingData.paymentMethod === 'Bank Transfer') {
-      const newBooking = {
-        ...bookingData,
-        id: `b${Date.now()}`,
-        status: 'pending', // Pending verification for bank transfer
-        paymentStatus: 'pending',
-        createdAt: new Date().toISOString()
-      };
-      
-      setBookings(prev => [...prev, newBooking]);
-      
-      const newPayment = {
-        id: `p${Date.now()}`,
-        bookingId: newBooking.id,
-        amount: newBooking.totalPrice,
-        method: 'Bank Transfer',
-        status: 'pending',
-        receipt: bookingData.receipt, // Store receipt name or data
-        createdAt: newBooking.createdAt
-      };
-      setPayments(prev => [...prev, newPayment]);
-      setRooms(prevRooms => prevRooms.map(r => r.id === bookingData.roomId ? { ...r, status: 'booked' } : r));
-      
+    try {
+      let newBooking;
+      if (bookingData.receipt instanceof File) {
+        const formData = new FormData();
+        Object.keys(bookingData).forEach(key => formData.append(key, bookingData[key]));
+        const { data } = await api.post('/bookings', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        newBooking = data;
+      } else {
+        const { data } = await api.post('/bookings', bookingData);
+        newBooking = data;
+      }
+      await fetchBookings();
+      await fetchPayments();
       return { success: true, booking: newBooking };
+    } catch (err) {
+      return { success: false, message: err.response?.data?.message || 'Booking failed' };
     }
-    
-    return new Promise((resolve) => {
-      const handler = window.PaystackPop.setup({
-        key: 'pk_test_f68bf2750d5f94a2ca50db5dd38ca683f2d45152',
-        email: currentUser?.email || bookingData.guestEmail,
-        amount: bookingData.totalPrice * 100,
-        currency: 'NGN',
-        ref: 'IAH_' + Date.now(),
-        callback: (response) => {
-          const newBooking = {
-            ...bookingData,
-            id: `b${Date.now()}`,
-            createdAt: new Date().toISOString()
-          };
-          
-          setBookings(prev => [...prev, newBooking]);
-          
-          // Create linked payment log
-          const newPayment = {
-            id: `p${Date.now()}`,
-            bookingId: newBooking.id,
-            amount: newBooking.totalPrice,
-            method: 'Paystack',
-            status: 'success',
-            paystackRef: response.reference,
-            createdAt: newBooking.createdAt
-          };
-          setPayments(prev => [...prev, newPayment]);
-          
-          // Automatically update the room status to 'booked' so it shows as unavailable on the frontend
-          setRooms(prevRooms => prevRooms.map(r => r.id === bookingData.roomId ? { ...r, status: 'booked' } : r));
-          
-          resolve({ success: true, booking: newBooking });
-        },
-        onClose: () => {
-          resolve({ success: false, message: 'Payment cancelled' });
-        }
-      });
-      handler.openIframe();
-    });
   };
 
-  const updateBookingStatus = (id, status) => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
-    
-    // Also update associated payment if it exists
-    setPayments(prev => prev.map(p => p.bookingId === id ? { ...p, status: status === 'confirmed' ? 'success' : status === 'cancelled' ? 'failed' : 'pending' } : p));
+  const updateBookingStatus = async (id, status) => {
+    try {
+      await api.patch(`/bookings/${id}`, { status });
+      await fetchBookings();
+    } catch (err) {
+      console.error('updateBookingStatus:', err.message);
+    }
   };
 
-  const getBookingById = (id) => {
-    return bookings.find(b => b.id === id);
+  // ── Payments ─────────────────────────────────────────────
+  const confirmPayment = async (id, status, adminNotes) => {
+    try {
+      await api.patch(`/payments/${id}/confirm`, { status, adminNotes });
+      await fetchPayments();
+      await fetchBookings();
+    } catch (err) {
+      console.error('confirmPayment:', err.message);
+    }
   };
 
-  const updateRoom = (id, data) => {
-    setRooms(rooms.map(r => r.id === id ? { ...r, ...data } : r));
-  };
-
+  // ── Testimonials (local only) ─────────────────────────────
   const addTestimonial = (testimonial) => {
-    const newTestimonial = {
-      ...testimonial,
-      id: Date.now()
-    };
-    setTestimonials(prev => [newTestimonial, ...prev]);
+    setTestimonials(prev => [{ ...testimonial, id: Date.now() }, ...prev]);
     return { success: true };
   };
 
   return (
-    <AppContext.Provider value={{
-      rooms, setRooms, updateRoom,
-      bookings, setBookings, updateBookingStatus, createBooking, checkAvailability,
-      payments, setPayments,
-      users, setUsers,
-      testimonials, addTestimonial,
-      currentUser, login, logout
-    }}>
+    <AppContext.Provider
+      value={{
+        rooms, setRooms, updateRoom, fetchRooms, loading,
+        bookings, setBookings, updateBookingStatus, createBooking, checkAvailability, fetchBookings,
+        payments, setPayments, fetchPayments, confirmPayment,
+        users, setUsers,
+        testimonials, addTestimonial,
+        currentUser, login, logout
+      }}
+    >
       {children}
     </AppContext.Provider>
   );
-};;
+};

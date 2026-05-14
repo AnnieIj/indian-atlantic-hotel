@@ -52,7 +52,7 @@ const RoomDetails = () => {
     </div>
   );
 
-  const handleCheck = (e) => {
+  const handleCheck = async (e) => {
     e.preventDefault();
     if (!checkIn || !checkOut) return;
     
@@ -61,7 +61,7 @@ const RoomDetails = () => {
       return;
     }
     
-    const isAvailable = checkAvailability(room.id, checkIn, checkOut);
+    const isAvailable = await checkAvailability(room.id, checkIn, checkOut);
     if (isAvailable) {
       navigate(`/checkout?roomId=${room.id}&checkIn=${checkIn}&checkOut=${checkOut}`);
     } else {

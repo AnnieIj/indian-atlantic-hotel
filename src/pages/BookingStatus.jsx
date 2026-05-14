@@ -2,6 +2,9 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { CheckCircle, Clock, XCircle, ArrowLeft, RefreshCw, Hash, BedDouble, User, CreditCard, CalendarDays, CalendarCheck } from 'lucide-react';
+import axios from 'axios';
+
+const BASE_URL = 'https://indian-atlantichotelbackend.onrender.com';
 
 const BookingStatus = () => {
   const { bookingId } = useParams();
@@ -11,17 +14,30 @@ const BookingStatus = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching delay
-    const timer = setTimeout(() => {
-      const foundBooking = bookings.find(b => b.id === bookingId);
+    const load = async () => {
+      // First try to find in context (fast path)
+      let foundBooking = bookings.find(b => b.id === bookingId);
+      
+      // If not found in context (e.g. page refresh), fetch directly from API
+      if (!foundBooking) {
+        try {
+          const res = await axios.get(`${BASE_URL}/bookings/${bookingId}`);
+          foundBooking = res.data;
+        } catch (err) {
+          console.error('Failed to fetch booking:', err.message);
+        }
+      }
+
       if (foundBooking) {
         setBooking(foundBooking);
+        // Look for payment in context first, then try fetching
         const foundPayment = payments.find(p => p.bookingId === foundBooking.id);
-        setPayment(foundPayment);
+        setPayment(foundPayment || null);
       }
       setLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
+    };
+
+    load();
   }, [bookingId, bookings, payments]);
 
   if (loading) {
