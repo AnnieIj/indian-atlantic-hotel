@@ -27,7 +27,20 @@ const Rooms = () => {
       const priceMatch = r.price <= maxPrice;
       return categoryMatch && priceMatch;
     })
-    .sort((a, b) => parseInt(a.roomNumber) - parseInt(b.roomNumber));
+    .sort((a, b) => {
+      const roomA = a.roomNumber ? String(a.roomNumber) : (a.name ? String(a.name) : '');
+      const roomB = b.roomNumber ? String(b.roomNumber) : (b.name ? String(b.name) : '');
+      
+      const numA = parseInt(roomA.replace(/\D/g, ''), 10);
+      const numB = parseInt(roomB.replace(/\D/g, ''), 10);
+      
+      if (!isNaN(numA) && !isNaN(numB)) {
+        if (numA !== numB) {
+          return numA - numB;
+        }
+      }
+      return roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: 'base' });
+    });
 
 
   const types = ['All', 'Suite', 'Double Executive', 'Executive', 'Super Deluxe', 'Deluxe', 'Standard'];

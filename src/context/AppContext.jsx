@@ -55,7 +55,21 @@ export const AppProvider = ({ children }) => {
     setRoomsError(null);
     try {
       const { data } = await api.get('/rooms');
-      const result = Array.isArray(data) ? data : [];
+      let result = Array.isArray(data) ? data : [];
+      result.sort((a, b) => {
+        const roomA = a.roomNumber ? String(a.roomNumber) : (a.name ? String(a.name) : '');
+        const roomB = b.roomNumber ? String(b.roomNumber) : (b.name ? String(b.name) : '');
+        
+        const numA = parseInt(roomA.replace(/\D/g, ''), 10);
+        const numB = parseInt(roomB.replace(/\D/g, ''), 10);
+        
+        if (!isNaN(numA) && !isNaN(numB)) {
+          if (numA !== numB) {
+            return numA - numB;
+          }
+        }
+        return roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: 'base' });
+      });
       roomsCache = { data: result, fetchedAt: Date.now() };
       setRooms(result);
     } catch (err) {
