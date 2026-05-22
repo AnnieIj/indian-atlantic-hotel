@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Create an Axios instance for clean API integration
 const api = axios.create({
-  baseURL: import.meta.env.DEV ? '/api' : 'https://indian-atlantichotelbackend.onrender.com'
+  baseURL: '/api'
 });
 
 // Intercept requests to attach token
