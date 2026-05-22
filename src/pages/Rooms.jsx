@@ -21,11 +21,14 @@ const Rooms = () => {
     }
   }, []);
 
-  const filteredRooms = rooms.filter(r => {
-    const categoryMatch = filter === 'All' || r.type === filter;
-    const priceMatch = r.price <= maxPrice;
-    return categoryMatch && priceMatch;
-  });
+  const filteredRooms = rooms
+    .filter(r => {
+      const categoryMatch = filter === 'All' || r.type === filter;
+      const priceMatch = r.price <= maxPrice;
+      return categoryMatch && priceMatch;
+    })
+    .sort((a, b) => parseInt(a.roomNumber) - parseInt(b.roomNumber));
+
 
   const types = ['All', 'Suite', 'Double Executive', 'Executive', 'Super Deluxe', 'Deluxe', 'Standard'];
 
