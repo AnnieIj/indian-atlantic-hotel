@@ -16,7 +16,7 @@ api.interceptors.request.use((config) => {
 });
 
 export const AppContext = createContext({
-  rooms: [], setRooms: () => {}, updateRoom: () => {}, fetchRooms: async () => {}, loading: false,
+  rooms: [], setRooms: () => {}, updateRoom: () => {}, fetchRooms: async () => {}, loading: false, roomsError: null,
   bookings: [], setBookings: () => {}, updateBookingStatus: () => {}, createBooking: async () => ({}), checkAvailability: async () => true, fetchBookings: async () => {},
   payments: [], setPayments: () => {}, fetchPayments: async () => {}, confirmPayment: async () => {},
   users: [], setUsers: () => {},
@@ -39,15 +39,18 @@ export const AppProvider = ({ children }) => {
     }
   });
   const [loading, setLoading] = useState(false);
+  const [roomsError, setRoomsError] = useState(null);
 
   // ── Fetchers ────────────────────────────────────────────
   const fetchRooms = async () => {
     setLoading(true);
+    setRoomsError(null);
     try {
       const { data } = await api.get('/rooms');
       setRooms(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('fetchRooms:', err.message);
+      setRoomsError(err.message || 'Failed to connect to the backend server.');
     } finally {
       setLoading(false);
     }
@@ -86,7 +89,7 @@ export const AppProvider = ({ children }) => {
     try {
       const { data } = await api.post('/auth/login', { email, password });
       const { access_token, user } = data;
-      if (access_token && user?.role === 'admin') {
+      if (access_token && user?.role?.toLowerCase() === 'admin') {
         localStorage.setItem('token', access_token);
         localStorage.setItem('currentUser', JSON.stringify(user));
         setCurrentUser(user);
@@ -179,7 +182,7 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider
       value={{
-        rooms, setRooms, updateRoom, fetchRooms, loading,
+        rooms, setRooms, updateRoom, fetchRooms, loading, roomsError,
         bookings, setBookings, updateBookingStatus, createBooking, checkAvailability, fetchBookings,
         payments, setPayments, fetchPayments, confirmPayment,
         users, setUsers,

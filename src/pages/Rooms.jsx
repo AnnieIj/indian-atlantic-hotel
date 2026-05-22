@@ -7,7 +7,7 @@ import './Rooms.css';
 
 const Rooms = () => {
   const navigate = useNavigate();
-  const { rooms, loading, fetchRooms } = useContext(AppContext);
+  const { rooms, loading, fetchRooms, roomsError } = useContext(AppContext);
 
   const [filter, setFilter] = useState('All');
   const [maxPrice, setMaxPrice] = useState(150000);
@@ -76,6 +76,18 @@ const Rooms = () => {
 
         {loading ? (
           <p style={{ textAlign: "center", padding: '3rem' }}>Loading rooms from server...</p>
+        ) : roomsError ? (
+          <div className="glass-panel" style={{ textAlign: 'center', padding: '3rem', margin: '2rem auto', maxWidth: '600px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+            <h3 style={{ color: '#ef4444', marginBottom: '1rem' }}>Unable to Load Rooms</h3>
+            <p style={{ color: '#64748b', fontSize: '0.95rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+              The website could not fetch the rooms from the backend database:<br />
+              <code style={{ background: '#fff1f2', padding: '4px 8px', borderRadius: '4px', color: '#e11d48', fontSize: '0.85rem', display: 'inline-block', marginTop: '0.5rem', border: '1px solid #ffe4e6' }}>{roomsError}</code>
+            </p>
+            <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '2rem', lineHeight: '1.5' }}>
+              <strong>Troubleshooting Tip:</strong> If the hotel website is live on a custom domain, the backend server must be configured to allow CORS requests from your custom domain origin.
+            </p>
+            <button className="btn btn-primary" onClick={fetchRooms}>Retry Connection</button>
+          </div>
         ) : (
           <div className="rooms-grid">
             {filteredRooms.length === 0 ? (

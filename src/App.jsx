@@ -22,7 +22,7 @@ const ProtectedRoute = ({ children }) => {
   const { currentUser } = useContext(AppContext);
   const token = localStorage.getItem('token');
   
-  if (!token || !currentUser || currentUser.role !== 'admin') {
+  if (!token || !currentUser || currentUser.role?.toLowerCase() !== 'admin') {
     return <Navigate to="/admin/login" replace />;
   }
   return children;

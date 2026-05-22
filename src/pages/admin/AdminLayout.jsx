@@ -9,7 +9,7 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  if (!currentUser || currentUser.role !== 'admin') {
+  if (!currentUser || currentUser.role?.toLowerCase() !== 'admin') {
     return <div style={{padding: '2rem', textAlign: 'center'}}>Unauthorized. Please <Link to="/admin">login</Link>.</div>;
   }
 
