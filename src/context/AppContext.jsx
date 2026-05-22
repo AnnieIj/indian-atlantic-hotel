@@ -24,8 +24,11 @@ export const AppContext = createContext({
   currentUser: null, login: async () => {}, logout: () => {}
 });
 
+let roomsCache = { data: null, fetchedAt: 0 };
+const ROOMS_TTL = 5 * 60 * 1000;
+
 export const AppProvider = ({ children }) => {
-  const [rooms, setRooms] = useState([]);
+  const [rooms, setRooms] = useState(() => roomsCache.data || []);
   const [bookings, setBookings] = useState([]);
   const [payments, setPayments] = useState([]);
   const [users, setUsers] = useState([]);
@@ -42,12 +45,19 @@ export const AppProvider = ({ children }) => {
   const [roomsError, setRoomsError] = useState(null);
 
   // ── Fetchers ────────────────────────────────────────────
-  const fetchRooms = async () => {
+  const fetchRooms = async (force = false) => {
+    const now = Date.now();
+    if (!force && roomsCache.data && now - roomsCache.fetchedAt < ROOMS_TTL) {
+      setRooms(roomsCache.data);
+      return;
+    }
     setLoading(true);
     setRoomsError(null);
     try {
       const { data } = await api.get('/rooms');
-      setRooms(Array.isArray(data) ? data : []);
+      const result = Array.isArray(data) ? data : [];
+      roomsCache = { data: result, fetchedAt: Date.now() };
+      setRooms(result);
     } catch (err) {
       console.error('fetchRooms:', err.message);
       setRoomsError(err.message || 'Failed to connect to the backend server.');
@@ -113,7 +123,7 @@ export const AppProvider = ({ children }) => {
   const updateRoom = async (id, data) => {
     try {
       await api.patch(`/rooms/${id}`, data);
-      await fetchRooms();
+      await fetchRooms(true);
     } catch (err) {
       console.error('updateRoom:', err.message);
     }

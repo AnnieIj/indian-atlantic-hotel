@@ -107,7 +107,12 @@ const Rooms = () => {
                       src={room.image || 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=800&q=80'}
                       alt={room.name}
                       className="room-img"
+                      loading="lazy"
+                      decoding="async"
+                      width="800"
+                      height="250"
                       style={{ objectFit: 'cover', height: '250px', width: '100%' }}
+                      onLoad={(e) => e.target.classList.add('loaded')}
                     />
                     <span 
                       style={{
