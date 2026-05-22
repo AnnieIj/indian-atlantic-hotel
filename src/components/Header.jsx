@@ -75,7 +75,7 @@ const Header = () => {
           </div>
         </nav>
 
-        <button className="mobile-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+        <button className={`mobile-toggle${isMenuOpen ? ' is-open' : ''}`} onClick={() => setIsMenuOpen(!isMenuOpen)}>
           {isMenuOpen ? <X /> : <Menu />}
         </button>
       </div>

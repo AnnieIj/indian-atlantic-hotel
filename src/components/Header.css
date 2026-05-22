@@ -117,10 +117,28 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1001;
+    z-index: 1002;
     padding: 0.5rem;
     color: inherit;
     background: none;
+  }
+
+  /* Keep X icon always white so it's visible against the dark nav panel */
+  .mobile-toggle.is-open {
+    color: #ffffff !important;
+  }
+
+  /* Book Now button — full width and proper sizing on mobile */
+  .nav > div {
+    width: 100%;
+  }
+
+  .nav .btn-primary {
+    width: 100%;
+    text-align: center;
+    padding: 0.9rem 1.5rem;
+    font-size: 1rem;
+    justify-content: center;
   }
 
   .header-container {

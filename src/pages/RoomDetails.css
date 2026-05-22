@@ -159,6 +159,10 @@
   top: 100px;
 }
 
+.booking-widget h3 {
+  color: #ffffff;
+}
+
 .price-tag-wrapper .amount {
   font-size: 2rem;
   font-weight: 700;
