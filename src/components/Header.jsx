@@ -51,7 +51,7 @@ const Header = () => {
             }
           }}
         >
-          <img src="/logo.png" alt="Indian Atlantic Hotel" className="logo-img" />
+          <img src="/logo.png" alt="Indian Atlantic Hotel and Suites" className="logo-img" />
         </Link>
         
         <nav className={`nav ${isMenuOpen ? 'open' : ''}`}>

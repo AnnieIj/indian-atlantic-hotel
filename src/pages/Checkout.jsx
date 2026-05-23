@@ -104,7 +104,7 @@ const Checkout = () => {
         <div className="container text-center py-12">
           <CheckCircle size={64} className="text-gold mx-auto mb-4" />
           <h2>Booking Submitted!</h2>
-          <p className="mt-4">Thank you for choosing Indian Atlantic Hotel.</p>
+          <p className="mt-4">Thank you for choosing Indian Atlantic Hotel and Suites.</p>
           {paymentMethod === 'Bank Transfer' ? (
             <p>Your booking is pending verification of your transfer. We will contact you shortly.</p>
           ) : (

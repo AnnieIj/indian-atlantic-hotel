@@ -1,6 +1,6 @@
-# Indian Atlantic Hotel Management Platform
+# Indian Atlantic Hotel and Suites Management Platform
 
-A premium, luxury-focused hotel management SaaS designed for the **Indian Atlantic Hotel** in Agbor. This platform features a high-end guest booking engine and a comprehensive administrative dashboard for real-time inventory and booking management.
+A premium, luxury-focused hotel management SaaS designed for the **Indian Atlantic Hotel and Suites** in Agbor. This platform features a high-end guest booking engine and a comprehensive administrative dashboard for real-time inventory and booking management.
 
 ## ✨ Features
 
@@ -42,7 +42,7 @@ A premium, luxury-focused hotel management SaaS designed for the **Indian Atlant
    ```
 
 ## 📄 License
-This project is proprietary and built specifically for Indian Atlantic Hotel.
+This project is proprietary and built specifically for Indian Atlantic Hotel and Suites.
 
 ---
-*Built with ❤️ for Indian Atlantic Hotel.*
+*Built with ❤️ for Indian Atlantic Hotel and Suites.*

@@ -84,7 +84,7 @@ const Home = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <div className="hero-brand">Indian Atlantic Hotel</div>
+            <div className="hero-brand">Indian Atlantic Hotel and Suites</div>
             <h1>Experience Luxury<br />Like Never Before</h1>
             <p>Your perfect escape in the heart of Agbor.</p>
           </motion.div>
@@ -149,11 +149,11 @@ const Home = () => {
       <section id="about" className="section bg-light">
         <div className="container about-section">
           <motion.div className="about-text" {...fadeInUp}>
-            <div className="subtitle">WELCOME TO INDIAN ATLANTIC HOTEL</div>
+            <div className="subtitle">WELCOME TO INDIAN ATLANTIC HOTEL AND SUITES</div>
             <h2>A Heritage of Comfort and Elegance</h2>
             <div className="divider" style={{ margin: '1rem 0 2rem 0' }}></div>
             <p>
-              Located securely in Agbor, the Indian Atlantic Hotel offers an unrivaled blend of modern luxury and serene comfort. From our 24/7 power supply to our meticulously designed rooms, every detail is crafted to ensure an unforgettable stay.
+              Located securely in Agbor, the Indian Atlantic Hotel and Suites offers an unrivaled blend of modern luxury and serene comfort. From our 24/7 power supply to our meticulously designed rooms, every detail is crafted to ensure an unforgettable stay.
             </p>
             <p>
               Whether you are visiting for business or leisure, our dedicated staff is committed to providing you with world-class hospitality and personalized service.
@@ -163,7 +163,7 @@ const Home = () => {
           <motion.div className="about-image" {...fadeInUp}>
             <img
               src="/indian atlantic pics/heritage.jpeg"
-              alt="Indian Atlantic Hotel Heritage and Culture"
+              alt="Indian Atlantic Hotel and Suites Heritage and Culture"
               loading="lazy"
               onLoad={(e) => e.target.classList.add('loaded')}
               style={{ width: '100%', borderRadius: '4px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)' }}
@@ -355,7 +355,7 @@ const Home = () => {
           <motion.div className="section-header text-center" {...fadeInUp}>
             <h2>Our Property Showcase</h2>
             <div className="divider"></div>
-            <p style={{ color: 'var(--color-text-muted)' }}>A glimpse into the elegance and comfort of Indian Atlantic Hotel.</p>
+            <p style={{ color: 'var(--color-text-muted)' }}>A glimpse into the elegance and comfort of Indian Atlantic Hotel and Suites.</p>
           </motion.div>
 
           <div className="gallery-carousel-wrapper" style={{ marginTop: '3rem', position: 'relative' }}>
@@ -377,7 +377,7 @@ const Home = () => {
                   />
                   <div className="gallery-caption" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '2rem', background: 'linear-gradient(transparent, rgba(0,0,0,0.7))', color: '#fff' }}>
                     <h3 style={{ color: '#fff', marginBottom: '0.5rem' }}>Property View {currentGallery + 1}</h3>
-                    <p style={{ fontSize: '0.9rem', opacity: 0.9 }}>Experience the unique blend of luxury and comfort at Indian Atlantic Hotel.</p>
+                    <p style={{ fontSize: '0.9rem', opacity: 0.9 }}>Experience the unique blend of luxury and comfort at Indian Atlantic Hotel and Suites.</p>
                   </div>
                 </motion.div>
               </AnimatePresence>

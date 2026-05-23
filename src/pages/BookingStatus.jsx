@@ -88,7 +88,7 @@ const BookingStatus = () => {
             <CheckCircle size={64} className="text-success mx-auto mb-6" />
             <h2 className="text-navy">Booking Successful ✅</h2>
             <p className="mt-4 text-muted max-w-md mx-auto">
-              Your payment has been verified! We look forward to welcoming you at Indian Atlantic Hotel.
+              Your payment has been verified! We look forward to welcoming you at Indian Atlantic Hotel and Suites.
             </p>
             <div className="mt-8 flex gap-4 justify-center">
               <button className="btn btn-primary" onClick={() => window.print()}>Print Receipt</button>

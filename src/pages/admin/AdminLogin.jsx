@@ -38,7 +38,7 @@ const AdminLogin = () => {
         <div className="text-center mb-6">
           <img
             src="/logo.png"
-            alt="Indian Atlantic Hotel"
+            alt="Indian Atlantic Hotel and Suites"
             className="login-logo-img mx-auto mb-4"
             style={{ maxWidth: '180px', height: 'auto' }}
           />

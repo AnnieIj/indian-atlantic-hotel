@@ -23,7 +23,7 @@ const AdminLayout = () => {
       <aside className="admin-sidebar">
         <div className="sidebar-header">
           <Link to="/" style={{ textDecoration: 'none' }}>
-            <img src="/logo.png" alt="Indian Atlantic Hotel" className="admin-logo-img" style={{ maxWidth: '100%', height: 'auto', display: 'block', margin: '0 auto' }} />
+            <img src="/logo.png" alt="Indian Atlantic Hotel and Suites" className="admin-logo-img" style={{ maxWidth: '100%', height: 'auto', display: 'block', margin: '0 auto' }} />
           </Link>
         </div>
         
