@@ -73,7 +73,7 @@ const Footer = () => {
           <ul className="contact-info">
             <li style={{alignItems: 'flex-start'}}><MapPin size={18} style={{flexShrink: 0, marginTop: '4px'}} /> <span>8 Cemetery Street, off Old Lagos Asaba Road, Agbor, Delta State</span></li>
             <li><Phone size={18} style={{flexShrink: 0}} /> <span>07072662150</span></li>
-            <li><Mail size={18} style={{flexShrink: 0}} /> <span>indiaathletichotelandsuites@gmail.com</span></li>
+            <li><Mail size={18} style={{flexShrink: 0}} /> <span>indianatlantichotel@gmail.com</span></li>
           </ul>
         </div>
       </div>
