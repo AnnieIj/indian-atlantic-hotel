@@ -33,22 +33,30 @@ const Home = () => {
 
   // Gallery Carousel State
   const galleryImages = [
-    "/indian atlantic pics/IMG-20260224-WA0036.jpg.jpeg",
-    "/indian atlantic pics/IMG-20260224-WA0037(1).jpg.jpeg",
-    "/indian atlantic pics/IMG-20260224-WA0041(1).jpg.jpeg",
-    "/indian atlantic pics/IMG-20260224-WA0044.jpg.jpeg",
-    "/indian atlantic pics/IMG-20260224-WA0045.jpg.jpeg",
-    "/indian atlantic pics/IMG-20260224-WA0049.jpg.jpeg",
-    "/indian atlantic pics/IMG-20260224-WA0051.jpg.jpeg",
-    "/indian atlantic pics/IMG-20260224-WA0052.jpg.jpeg",
-    "/indian atlantic pics/IMG-20260224-WA0053.jpg.jpeg",
-    "/indian atlantic pics/RBA_5156.jpg.jpeg",
-    "/indian atlantic pics/RBA_5183.jpg.jpeg"
+    "/indian atlantic pics/PS 1.jpeg",
+    "/indian atlantic pics/PS 2.jpeg",
+    "/indian atlantic pics/PS 3.jpeg",
+    "/indian atlantic pics/PS 4.jpeg",
+    "/indian atlantic pics/PS 5.jpeg",
+    "/indian atlantic pics/PS 6.jpeg",
+    "/indian atlantic pics/PS 7.jpeg",
+    "/indian atlantic pics/PS 8.jpeg",
+    "/indian atlantic pics/PS 9.jpeg",
+    "/indian atlantic pics/PS 10.jpeg",
+    "/indian atlantic pics/PS 11.jpeg"
   ];
   const [currentGallery, setCurrentGallery] = useState(0);
 
   const nextGallery = () => setCurrentGallery((prev) => (prev + 1) % galleryImages.length);
   const prevGallery = () => setCurrentGallery((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+
+  // Autoplay: advance every 5 seconds, loop continuously
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentGallery((prev) => (prev + 1) % galleryImages.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [galleryImages.length]);
 
   const fadeInUp = {
     initial: { opacity: 0, y: 30 },
@@ -199,27 +207,36 @@ const Home = () => {
             <div className="divider"></div>
           </motion.div>
 
-          <div className="rooms-grid" style={{ marginTop: '3rem' }}>
-            {rooms.slice(0, 3).map((room, idx) => (
-              <motion.div key={room.id} className="room-card" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.2 }}>
-                <img
-                  src={room.image}
-                  alt={room.name}
-                  className="room-img"
-                  loading="lazy"
-                  onLoad={(e) => e.target.classList.add('loaded')}
-                />
-                <div className="room-info">
-                  <h3>{room.name}</h3>
-                  <div className="price">₦{room.price.toLocaleString()} <span>/ night</span></div>
-                  <p className="desc">{room.description}</p>
-                  <Link to={`/room/${room.id}`} className="btn btn-outline" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-                    View Details <ChevronRight size={18} />
-                  </Link>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          {(() => {
+            const featuredImages = [
+              "/indian atlantic pics/SR 101.jpeg",
+              "/indian atlantic pics/DR 102.jpeg",
+              "/indian atlantic pics/ER 103.jpeg"
+            ];
+            return (
+              <div className="rooms-grid" style={{ marginTop: '3rem' }}>
+                {rooms.slice(0, 3).map((room, idx) => (
+                  <motion.div key={room.id} className="room-card" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.2 }}>
+                    <img
+                      src={featuredImages[idx] || room.image}
+                      alt={room.name}
+                      className="room-img"
+                      loading="lazy"
+                      onLoad={(e) => e.target.classList.add('loaded')}
+                    />
+                    <div className="room-info">
+                      <h3>{room.name}</h3>
+                      <div className="price">₦{room.price.toLocaleString()} <span>/ night</span></div>
+                      <p className="desc">{room.description}</p>
+                      <Link to={`/room/${room.id}`} className="btn btn-outline" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                        View Details <ChevronRight size={18} />
+                      </Link>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </section>
 

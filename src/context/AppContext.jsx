@@ -70,6 +70,41 @@ export const AppProvider = ({ children }) => {
         }
         return roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: 'base' });
       });
+
+      // Override room images with local photos
+      const imageOverrides = {
+        '101': '/indian atlantic pics/SR 101.jpeg',
+        '102': '/indian atlantic pics/SD 305.jpeg',
+        '103': '/indian atlantic pics/ER 103.jpeg',
+        '104': '/indian atlantic pics/ER 103.jpeg',
+        '105': '/indian atlantic pics/ER 303.jpeg',
+        '113': '/indian atlantic pics/SD 113.jpeg',
+        '202': '/indian atlantic pics/SD 307.jpeg',
+        '204': '/indian atlantic pics/SUITE 204.jpeg',
+        '205': '/indian atlantic pics/SD 206.jpeg',
+        '206': '/indian atlantic pics/SD 206.jpeg',
+        '207': '/indian atlantic pics/SD 206.jpeg',
+        '208': '/indian atlantic pics/SD 208.jpeg',
+        '209': '/indian atlantic pics/SD 208.jpeg',
+        '210': '/indian atlantic pics/ER 210.jpeg',
+        '303': '/indian atlantic pics/ER 303.jpeg',
+        '304': '/indian atlantic pics/SUITE 304.jpeg',
+        '305': '/indian atlantic pics/SD 305.jpeg',
+        '306': '/indian atlantic pics/SD 206.jpeg',
+        '307': '/indian atlantic pics/SD 307.jpeg',
+        '309': '/indian atlantic pics/SD 305.jpeg',
+        '310': '/indian atlantic pics/SD 208.jpeg',
+        '311': '/indian atlantic pics/DE 311.jpeg',
+        '314': '/indian atlantic pics/SR 101.jpeg',
+      };
+      result = result.map(room => {
+        const roomNum = (room.roomNumber || room.name || '').toString().replace(/\D/g, '');
+        if (imageOverrides[roomNum]) {
+          return { ...room, image: imageOverrides[roomNum] };
+        }
+        return room;
+      });
+
       roomsCache = { data: result, fetchedAt: Date.now() };
       setRooms(result);
     } catch (err) {
