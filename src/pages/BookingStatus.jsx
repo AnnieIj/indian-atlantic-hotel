@@ -68,6 +68,8 @@ const BookingStatus = () => {
   const renderStatus = () => {
     switch (booking.status) {
       case 'pending':
+        // existing pending card is fine for Bank Transfer
+        // For Pay on Arrival, status will be 'confirmed' already so no change needed
         return (
           <div className="status-card pending glass-panel text-center py-12 px-6">
             <Clock size={64} className="text-warning mx-auto mb-6 shimmer" />
@@ -88,7 +90,9 @@ const BookingStatus = () => {
             <CheckCircle size={64} className="text-success mx-auto mb-6" />
             <h2 className="text-navy">Booking Successful ✅</h2>
             <p className="mt-4 text-muted max-w-md mx-auto">
-              Your payment has been verified! We look forward to welcoming you at Indian Atlantic Hotel and Suites.
+              {(booking.payment?.method === 'Pay on Arrival' || payment?.method === 'Pay on Arrival')
+                ? "Your booking is confirmed! We look forward to welcoming you at Indian Atlantic Hotel and Suites."
+                : "Your payment has been verified! We look forward to welcoming you at Indian Atlantic Hotel and Suites."}
             </p>
             <div className="mt-8 flex gap-4 justify-center">
               <button className="btn btn-primary" onClick={() => window.print()}>Print Receipt</button>
@@ -198,6 +202,20 @@ const BookingStatus = () => {
                 </div>
               </div>
             </div>
+
+            {(booking.payment?.method === 'Pay on Arrival' || payment?.method === 'Pay on Arrival') && (
+              <div style={{margin:'2rem 0', background:'#d4af37', borderRadius:'12px', padding:'2rem', textAlign:'center'}}>
+                <p style={{fontWeight:'bold', fontSize:'0.85rem', letterSpacing:'2px', textTransform:'uppercase', color:'#1a2332', marginBottom:'0.5rem'}}>
+                  Your Check-In Code
+                </p>
+                <p style={{fontSize:'3rem', fontWeight:'900', letterSpacing:'12px', color:'#1a2332', margin:'0.5rem 0'}}>
+                  {booking.confirmationCode}
+                </p>
+                <p style={{fontSize:'0.8rem', color:'#1a2332', opacity:0.75}}>
+                  Show this to reception when you arrive
+                </p>
+              </div>
+            )}
             
             <div className="mt-8 pt-6 border-t border-dashed border-gray-200 text-center">
               <p className="text-sm text-[#64748b] italic">

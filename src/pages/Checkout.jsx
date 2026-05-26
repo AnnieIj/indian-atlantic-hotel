@@ -165,6 +165,18 @@ const Checkout = () => {
                   </div>
                   <div className="status-badge upcoming">Coming Soon</div>
                 </div>
+
+                <div
+                  className={`payment-method-card ${paymentMethod === 'Pay on Arrival' ? 'active' : ''}`}
+                  onClick={() => setPaymentMethod('Pay on Arrival')}
+                >
+                  <div className="method-icon"><CheckCircle size={20} /></div>
+                  <div className="method-info">
+                    <h4>Pay on Arrival</h4>
+                    <p>Pay cash when you arrive</p>
+                  </div>
+                  <div className="status-badge active">Available</div>
+                </div>
               </div>
 
               {paymentMethod === 'Bank Transfer' && (
@@ -223,8 +235,20 @@ const Checkout = () => {
                 </div>
               )}
 
+              {paymentMethod === 'Pay on Arrival' && (
+                <div className="bank-details-panel mt-6" style={{background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:'8px', padding:'1.5rem'}}>
+                  <h4>Pay on Arrival – Cash Payment</h4>
+                  <p>Your room will be held for you. Please bring the exact amount in cash when you check in.</p>
+                  <p><strong>Amount due on arrival: ₦{total.toLocaleString()}</strong></p>
+                  <p style={{fontSize:'0.85rem', color:'#64748b'}}>A 6-digit check-in code will be sent to your email immediately after booking. Show it at reception.</p>
+                </div>
+              )}
+
               <button type="submit" className="btn btn-primary w-full mt-8" disabled={isProcessing}>
-                {isProcessing ? 'Processing...' : paymentMethod === 'Bank Transfer' ? 'I Have Paid' : `Pay ₦${total.toLocaleString()} Now`}
+                {isProcessing ? 'Processing...' 
+                  : paymentMethod === 'Bank Transfer' ? 'I Have Paid'
+                  : paymentMethod === 'Pay on Arrival' ? 'Confirm Booking'
+                  : `Pay ₦${total.toLocaleString()} Now`}
               </button>
             </div>
           </form>
