@@ -192,11 +192,11 @@ const Checkout = () => {
                     </div>
                     <div className="bank-info-item">
                       <span className="label">Account Name</span>
-                      <span className="value">Indian Atlantic Kitchen 2</span>
+                      <span className="value">Indian Atlantic Hotel & Suites LTD</span>
                     </div>
                     <div className="bank-info-item">
                       <span className="label">Account Number</span>
-                      <span className="value accent">5070119651</span>
+                      <span className="value accent">5805005299</span>
                     </div>
                   </div>
                   
