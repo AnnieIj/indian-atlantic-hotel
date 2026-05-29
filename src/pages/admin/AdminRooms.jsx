@@ -26,8 +26,7 @@ const AdminRooms = () => {
     // Fetch gallery for the room
     try {
       const gallery = await api.get(`/rooms/${room.id}/gallery`);
-      // Assuming gallery returns an array of objects like { id, url } or just string URLs
-      setPreviewImages(gallery || []);
+      setPreviewImages(gallery?.galleryImages || []);
     } catch (error) {
       setPreviewImages(room.images ? room.images : (room.image ? [{url: room.image}] : []));
     }
