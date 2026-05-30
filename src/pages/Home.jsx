@@ -162,7 +162,7 @@ const Home = () => {
           </motion.div>
           <motion.div className="about-image" {...fadeInUp}>
             <img
-              src="/indian atlantic pics/heritage.jpeg"
+              src="/indian atlantic pics/hero 1.jpeg"
               alt="Indian Atlantic Hotel and Suites Heritage and Culture"
               loading="lazy"
               onLoad={(e) => e.target.classList.add('loaded')}
@@ -208,17 +208,12 @@ const Home = () => {
           </motion.div>
 
           {(() => {
-            const featuredImages = [
-              "/indian atlantic pics/SR 101.jpeg",
-              "/indian atlantic pics/DR 102.jpeg",
-              "/indian atlantic pics/ER 103.jpeg"
-            ];
             return (
               <div className="rooms-grid" style={{ marginTop: '3rem' }}>
                 {rooms.slice(0, 3).map((room, idx) => (
                   <motion.div key={room.id} className="room-card" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.2 }}>
                     <img
-                      src={featuredImages[idx] || room.image}
+                      src={room.image}
                       alt={room.name}
                       className="room-img"
                       loading="lazy"
@@ -383,7 +378,7 @@ const Home = () => {
               </AnimatePresence>
 
               {/* Navigation Arrows */}
-              <button 
+              <button
                 onClick={prevGallery}
                 className="gallery-nav-btn prev"
                 style={{ position: 'absolute', left: '1.5rem', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', border: 'none', borderRadius: '50%', width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', cursor: 'pointer', zIndex: 10, transition: 'all 0.3s ease' }}
@@ -391,7 +386,7 @@ const Home = () => {
               >
                 <ChevronLeft size={24} />
               </button>
-              <button 
+              <button
                 onClick={nextGallery}
                 className="gallery-nav-btn next"
                 style={{ position: 'absolute', right: '1.5rem', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', border: 'none', borderRadius: '50%', width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', cursor: 'pointer', zIndex: 10, transition: 'all 0.3s ease' }}

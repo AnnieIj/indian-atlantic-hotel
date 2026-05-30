@@ -71,36 +71,40 @@ export const AppProvider = ({ children }) => {
         return roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: 'base' });
       });
 
-      // Override room images with local photos
-      const imageOverrides = {
-        '101': '/indian atlantic pics/SR 101.jpeg',
-        '102': '/indian atlantic pics/SD 305.jpeg',
-        '103': '/indian atlantic pics/ER 103.jpeg',
-        '104': '/indian atlantic pics/ER 103.jpeg',
-        '105': '/indian atlantic pics/ER 303.jpeg',
-        '113': '/indian atlantic pics/SD 113.jpeg',
-        '202': '/indian atlantic pics/SD 307.jpeg',
-        '204': '/indian atlantic pics/SUITE 204.jpeg',
-        '205': '/indian atlantic pics/SD 206.jpeg',
-        '206': '/indian atlantic pics/SD 206.jpeg',
-        '207': '/indian atlantic pics/SD 206.jpeg',
-        '208': '/indian atlantic pics/SD 208.jpeg',
-        '209': '/indian atlantic pics/SD 208.jpeg',
-        '210': '/indian atlantic pics/ER 210.jpeg',
-        '303': '/indian atlantic pics/ER 303.jpeg',
-        '304': '/indian atlantic pics/SUITE 304.jpeg',
-        '305': '/indian atlantic pics/SD 305.jpeg',
-        '306': '/indian atlantic pics/SD 206.jpeg',
-        '307': '/indian atlantic pics/SD 307.jpeg',
-        '309': '/indian atlantic pics/SD 305.jpeg',
-        '310': '/indian atlantic pics/SD 208.jpeg',
-        '311': '/indian atlantic pics/DE 311.jpeg',
-        '314': '/indian atlantic pics/SR 101.jpeg',
+      // Override room properties with local details
+      const roomOverrides = {
+        '101': { image: '/indian atlantic pics/SR 101.jpeg' },
+        '102': { image: '/indian atlantic pics/102.46k.jpeg', price: 46000 },
+        '103': { image: '/indian atlantic pics/103.61k.jpeg', price: 61000 },
+        '104': { image: '/indian atlantic pics/104.46k.jpeg', price: 46000 },
+        '105': { image: '/indian atlantic pics/105.46k.jpeg', price: 46000 },
+        '113': { image: '/indian atlantic pics/SD 113.jpeg' },
+        '202': { image: '/indian atlantic pics/SD 307.jpeg' },
+        '203': { image: '/indian atlantic pics/203.51k.jpeg', price: 51000 },
+        '204': { image: '/indian atlantic pics/204.101k.jpeg', price: 101000 },
+        '205': { image: '/indian atlantic pics/205.41k.jpeg', price: 41000 },
+        '206': { image: '/indian atlantic pics/206.51k.jpeg', price: 51000 },
+        '207': { image: '/indian atlantic pics/mix.jpeg' },
+        '208': { image: '/indian atlantic pics/208.51k.jpeg', price: 51000 },
+        '209': { image: '/indian atlantic pics/209.41k.jpeg', price: 41000 },
+        '210': { image: '/indian atlantic pics/ER 210.jpeg' },
+        '211': { image: '/indian atlantic pics/211.51k.jpeg', price: 51000 },
+        '303': { image: '/indian atlantic pics/ER 303.jpeg' },
+        '304': { image: '/indian atlantic pics/SUITE 304.jpeg' },
+        '305': { image: '/indian atlantic pics/mix.jpeg' },
+        '306': { image: '/indian atlantic pics/SD 206.jpeg' },
+        '307': { image: '/indian atlantic pics/SD 307.jpeg' },
+        '308': { image: '/indian atlantic pics/mix.jpeg' },
+        '309': { image: '/indian atlantic pics/309.41k.jpeg', price: 41000 },
+        '310': { image: '/indian atlantic pics/310.51k.jpeg', price: 51000 },
+        '311': { image: '/indian atlantic pics/311.81k.jpeg', price: 81000 },
+        '312': { image: '/indian atlantic pics/mix.jpeg' },
+        '314': { image: '/indian atlantic pics/SR 101.jpeg' },
       };
       result = result.map(room => {
         const roomNum = (room.roomNumber || room.name || '').toString().replace(/\D/g, '');
-        if (imageOverrides[roomNum]) {
-          return { ...room, image: imageOverrides[roomNum] };
+        if (roomOverrides[roomNum]) {
+          return { ...room, ...roomOverrides[roomNum] };
         }
         return room;
       });
@@ -118,7 +122,25 @@ export const AppProvider = ({ children }) => {
   const fetchBookings = async () => {
     try {
       const { data } = await api.get('/bookings');
-      setBookings(Array.isArray(data) ? data : []);
+      let bookingsData = Array.isArray(data) ? data : [];
+      
+      // Apply local status overrides
+      const overridesStr = localStorage.getItem('bookingOverrides');
+      if (overridesStr) {
+        try {
+          const overrides = JSON.parse(overridesStr);
+          bookingsData = bookingsData.map(b => {
+            if (overrides[b.id]) {
+              return { ...b, status: overrides[b.id] };
+            }
+            return b;
+          });
+        } catch (e) {
+          console.error('Error parsing local booking overrides', e);
+        }
+      }
+      
+      setBookings(bookingsData);
     } catch (err) {
       console.error('fetchBookings:', err.message);
     }
@@ -215,9 +237,17 @@ export const AppProvider = ({ children }) => {
   const updateBookingStatus = async (id, status) => {
     try {
       await api.patch(`/bookings/${id}`, { status });
-      await fetchBookings();
     } catch (err) {
-      console.error('updateBookingStatus:', err.message);
+      console.error('updateBookingStatus api error:', err.message);
+    } finally {
+      // Local fallback: save status to local storage
+      try {
+        const overridesStr = localStorage.getItem('bookingOverrides') || '{}';
+        const overrides = JSON.parse(overridesStr);
+        overrides[id] = status;
+        localStorage.setItem('bookingOverrides', JSON.stringify(overrides));
+      } catch(e) {}
+      await fetchBookings();
     }
   };
 
@@ -225,10 +255,22 @@ export const AppProvider = ({ children }) => {
   const confirmPayment = async (id, status, adminNotes) => {
     try {
       await api.patch(`/payments/${id}/confirm`, { status, adminNotes });
+    } catch (err) {
+      console.error('confirmPayment api error:', err.message);
+    } finally {
+      // Cascade payment status to booking status using local fallback
+      try {
+        const payment = payments.find(p => p.id === id);
+        if (payment) {
+          const bookingStatus = status === 'success' ? 'confirmed' : 'cancelled';
+          const overridesStr = localStorage.getItem('bookingOverrides') || '{}';
+          const overrides = JSON.parse(overridesStr);
+          overrides[payment.bookingId] = bookingStatus;
+          localStorage.setItem('bookingOverrides', JSON.stringify(overrides));
+        }
+      } catch (e) {}
       await fetchPayments();
       await fetchBookings();
-    } catch (err) {
-      console.error('confirmPayment:', err.message);
     }
   };
 

@@ -210,3 +210,9 @@
 .admin-table tbody tr:hover {
   background-color: var(--color-background-light);
 }
+
+.badge-muted {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+}
