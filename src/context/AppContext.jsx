@@ -71,42 +71,20 @@ export const AppProvider = ({ children }) => {
         return roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: 'base' });
       });
 
-      // Override room properties with local details
-      const roomOverrides = {
-        '101': { image: '/indian atlantic pics/SR 101.jpeg' },
-        '102': { image: '/indian atlantic pics/102.46k.jpeg', price: 46000 },
-        '103': { image: '/indian atlantic pics/103.61k.jpeg', price: 61000 },
-        '104': { image: '/indian atlantic pics/104.46k.jpeg', price: 46000 },
-        '105': { image: '/indian atlantic pics/105.46k.jpeg', price: 46000 },
-        '113': { image: '/indian atlantic pics/SD 113.jpeg' },
-        '202': { image: '/indian atlantic pics/SD 307.jpeg' },
-        '203': { image: '/indian atlantic pics/203.51k.jpeg', price: 51000 },
-        '204': { image: '/indian atlantic pics/204.101k.jpeg', price: 101000 },
-        '205': { image: '/indian atlantic pics/205.41k.jpeg', price: 41000 },
-        '206': { image: '/indian atlantic pics/206.51k.jpeg', price: 51000 },
-        '207': { image: '/indian atlantic pics/mix.jpeg' },
-        '208': { image: '/indian atlantic pics/208.51k.jpeg', price: 51000 },
-        '209': { image: '/indian atlantic pics/209.41k.jpeg', price: 41000 },
-        '210': { image: '/indian atlantic pics/ER 210.jpeg' },
-        '211': { image: '/indian atlantic pics/211.51k.jpeg', price: 51000 },
-        '303': { image: '/indian atlantic pics/ER 303.jpeg' },
-        '304': { image: '/indian atlantic pics/SUITE 304.jpeg' },
-        '305': { image: '/indian atlantic pics/mix.jpeg' },
-        '306': { image: '/indian atlantic pics/SD 206.jpeg' },
-        '307': { image: '/indian atlantic pics/SD 307.jpeg' },
-        '308': { image: '/indian atlantic pics/mix.jpeg' },
-        '309': { image: '/indian atlantic pics/309.41k.jpeg', price: 41000 },
-        '310': { image: '/indian atlantic pics/310.51k.jpeg', price: 51000 },
-        '311': { image: '/indian atlantic pics/311.81k.jpeg', price: 81000 },
-        '312': { image: '/indian atlantic pics/mix.jpeg' },
-        '314': { image: '/indian atlantic pics/SR 101.jpeg' },
+      // Images now come straight from the database (Supabase Storage URLs),
+      // so admins can change/upload room images and have them reflect here.
+      // Only a few prices are still pinned on the frontend until they are
+      // managed in the DB; remove these once the DB prices are updated.
+      const priceOverrides = {
+        '104': 46000,
+        '205': 41000,
+        '209': 41000,
       };
       result = result.map(room => {
         const roomNum = (room.roomNumber || room.name || '').toString().replace(/\D/g, '');
-        if (roomOverrides[roomNum]) {
-          return { ...room, ...roomOverrides[roomNum] };
-        }
-        return room;
+        return priceOverrides[roomNum]
+          ? { ...room, price: priceOverrides[roomNum] }
+          : room;
       });
 
       roomsCache = { data: result, fetchedAt: Date.now() };
