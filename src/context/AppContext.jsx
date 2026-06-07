@@ -90,21 +90,8 @@ export const AppProvider = ({ children }) => {
         return roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: 'base' });
       });
 
-      // Images now come straight from the database (Supabase Storage URLs),
-      // so admins can change/upload room images and have them reflect here.
-      // Only a few prices are still pinned on the frontend until they are
-      // managed in the DB; remove these once the DB prices are updated.
-      const priceOverrides = {
-        '104': 46000,
-        '205': 41000,
-        '209': 41000,
-      };
-      result = result.map(room => {
-        const roomNum = (room.roomNumber || room.name || '').toString().replace(/\D/g, '');
-        return priceOverrides[roomNum]
-          ? { ...room, price: priceOverrides[roomNum] }
-          : room;
-      });
+      // Rooms (images and prices) now come straight from the database, so
+      // admins fully control them. No frontend overrides.
 
       roomsCache = { data: result, fetchedAt: Date.now() };
       setRooms(result);
