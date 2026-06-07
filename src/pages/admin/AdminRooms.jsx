@@ -1,7 +1,7 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
 import { AppContext } from '../../context/AppContext';
 import { api } from '../../services/api';
-import { X, Save, Edit3, ImagePlus, Trash2 } from 'lucide-react';
+import { X, Save, Edit3, ImagePlus, Trash2, Star } from 'lucide-react';
 
 const MAX_IMAGES = 4;
 
@@ -23,12 +23,19 @@ const AdminRooms = () => {
     setUploadProgress(0);
     setNewFiles([]);
     
-    // Fetch gallery for the room
+    // Fetch gallery for the room. Show the current MAIN image first, then the
+    // rest of the gallery, so the admin can see and change which is main.
     try {
       const gallery = await api.get(`/rooms/${room.id}/gallery`);
-      setPreviewImages(gallery?.galleryImages || []);
+      const main = gallery?.mainImage || room.image;
+      const galleryImgs = gallery?.galleryImages || [];
+      setPreviewImages(
+        [main, ...galleryImgs.filter(u => (u.url || u) !== main)].filter(Boolean),
+      );
     } catch (error) {
-      setPreviewImages(room.images ? room.images : (room.image ? [{url: room.image}] : []));
+      setPreviewImages(
+        room.image ? [room.image, ...(room.images || [])] : (room.images || []),
+      );
     }
   };
 
@@ -93,6 +100,24 @@ const AdminRooms = () => {
       await fetchRooms(); // Refresh rooms to ensure main image is updated
     } catch (error) {
       setUploadMessage({ type: 'error', text: 'Failed to delete image' });
+    }
+  };
+
+  // Make an image the room's MAIN image (what shows on the website). This is the
+  // only thing that changes the displayed room picture — uploading just adds to
+  // the gallery.
+  const handleSetMain = async (imageUrl) => {
+    try {
+      await updateRoom(editingRoom.id, { image: imageUrl });
+      setEditingRoom(prev => ({ ...prev, image: imageUrl }));
+      setUploadMessage({ type: 'success', text: 'Main image updated' });
+    } catch (error) {
+      const serverMsg = error.response?.data?.message;
+      setUploadMessage({
+        type: 'error',
+        text: (Array.isArray(serverMsg) ? serverMsg.join(', ') : serverMsg) ||
+          'Failed to set main image',
+      });
     }
   };
 
@@ -232,6 +257,7 @@ const AdminRooms = () => {
               <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '0.75rem'}}>
                 {Array.from({ length: MAX_IMAGES }).map((_, i) => {
                   const img = combinedImages[i];
+                  const isMain = img && img.type === 'existing' && img.url === editingRoom?.image;
                   return (
                     <div
                       key={i}
@@ -254,36 +280,52 @@ const AdminRooms = () => {
                             alt={`Room image ${i + 1}`}
                             style={{width: '100%', height: '100%', objectFit: 'cover', opacity: img.type === 'new' ? 0.7 : 1}}
                           />
-                          <button
-                            onClick={() => {
-                              if (img.type === 'existing') {
-                                handleRemoveExistingImage(img.url);
-                              } else {
-                                // Find index in newFiles
-                                const newFileIndex = newFiles.findIndex(f => f === img.file);
-                                handleRemoveNewFile(newFileIndex);
-                              }
-                            }}
-                            style={{
-                              position: 'absolute', top: '4px', right: '4px',
-                              background: 'rgba(239,68,68,0.9)', color: '#fff',
-                              border: 'none', borderRadius: '50%',
-                              width: '22px', height: '22px',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-                            }}
-                            title="Remove image"
-                          >
-                            <Trash2 size={11} />
-                          </button>
-                          {i === 0 && (
+                          {(img.type === 'new' || !isMain) && (
+                            <button
+                              onClick={() => {
+                                if (img.type === 'existing') {
+                                  handleRemoveExistingImage(img.url);
+                                } else {
+                                  // Find index in newFiles
+                                  const newFileIndex = newFiles.findIndex(f => f === img.file);
+                                  handleRemoveNewFile(newFileIndex);
+                                }
+                              }}
+                              style={{
+                                position: 'absolute', top: '4px', right: '4px',
+                                background: 'rgba(239,68,68,0.9)', color: '#fff',
+                                border: 'none', borderRadius: '50%',
+                                width: '22px', height: '22px',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+                              }}
+                              title="Remove image"
+                            >
+                              <Trash2 size={11} />
+                            </button>
+                          )}
+                          {isMain ? (
                             <span style={{
                               position: 'absolute', bottom: '4px', left: '4px',
                               background: 'var(--color-primary-gold)', color: '#fff',
                               fontSize: '0.6rem', fontWeight: 700, padding: '1px 5px',
                               borderRadius: '4px', textTransform: 'uppercase'
                             }}>Main</span>
-                          )}
+                          ) : img.type === 'existing' ? (
+                            <button
+                              onClick={() => handleSetMain(img.url)}
+                              title="Set as main image"
+                              style={{
+                                position: 'absolute', bottom: '4px', left: '4px',
+                                background: 'rgba(15,23,42,0.85)', color: '#fff',
+                                border: 'none', borderRadius: '4px',
+                                fontSize: '0.6rem', fontWeight: 700, padding: '2px 6px',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px'
+                              }}
+                            >
+                              <Star size={9} /> Set main
+                            </button>
+                          ) : null}
                           {img.type === 'new' && (
                             <span style={{
                               position: 'absolute', top: '4px', left: '4px',
