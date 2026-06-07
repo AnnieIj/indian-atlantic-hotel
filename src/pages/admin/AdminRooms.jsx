@@ -124,7 +124,12 @@ const AdminRooms = () => {
       }, 500);
     } catch (error) {
       setUploadProgress(0);
-      setUploadMessage({ type: 'error', text: error.message || 'Failed to save changes' });
+      const serverMsg = error.response?.data?.message;
+      setUploadMessage({
+        type: 'error',
+        text: (Array.isArray(serverMsg) ? serverMsg.join(', ') : serverMsg) ||
+          error.message || 'Failed to save changes',
+      });
     }
   };
 

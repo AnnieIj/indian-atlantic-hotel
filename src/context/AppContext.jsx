@@ -15,6 +15,25 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// If the token is missing/expired/invalid the server replies 401/403. Clear the
+// stale session and bounce admins back to login so the next sign-in works,
+// instead of every save failing silently.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    if ((status === 401 || status === 403) && typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('currentUser');
+      if (window.location.pathname.startsWith('/admin') &&
+          window.location.pathname !== '/admin/login') {
+        window.location.assign('/admin/login');
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const AppContext = createContext({
   rooms: [], setRooms: () => {}, updateRoom: () => {}, fetchRooms: async () => {}, loading: false, roomsError: null,
   bookings: [], setBookings: () => {}, updateBookingStatus: () => {}, createBooking: async () => ({}), checkAvailability: async () => true, fetchBookings: async () => {},
@@ -170,12 +189,10 @@ export const AppProvider = ({ children }) => {
 
   // ── Rooms ────────────────────────────────────────────────
   const updateRoom = async (id, data) => {
-    try {
-      await api.patch(`/rooms/${id}`, data);
-      await fetchRooms(true);
-    } catch (err) {
-      console.error('updateRoom:', err.message);
-    }
+    // Let errors propagate so the caller (admin UI) can show them instead of
+    // silently "succeeding". A 401 here is handled by the response interceptor.
+    await api.patch(`/rooms/${id}`, data);
+    await fetchRooms(true);
   };
 
   const checkAvailability = async (roomId, checkIn, checkOut) => {

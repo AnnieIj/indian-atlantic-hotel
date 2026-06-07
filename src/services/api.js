@@ -1,7 +1,7 @@
 const BASE_URL = 'https://indian-atlantichotelbackend.onrender.com';
 
 const getHeaders = (isFormData = false) => {
-  const token = localStorage.getItem('iah_access_token');
+  const token = localStorage.getItem('token');
   const headers = {};
   
   if (!isFormData) {
