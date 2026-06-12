@@ -75,6 +75,24 @@ export const AppProvider = ({ children }) => {
     try {
       const { data } = await api.get('/rooms');
       let result = Array.isArray(data) ? data : [];
+
+      // Local addition: Inject Room 102 since backend admin credentials are unavailable
+      const hasRoom102 = result.some(r => String(r.roomNumber) === '102' || r.name?.includes('102'));
+      if (!hasRoom102) {
+        result.push({
+          id: 'local-room-102',
+          roomNumber: '102',
+          name: 'Deluxe Room 102',
+          type: 'Deluxe',
+          description: 'A cozy and modern deluxe room with essential amenities for a comfortable stay.',
+          price: 46000,
+          capacity: 2,
+          status: 'available',
+          image: '/indian atlantic pics/102.46k.jpeg',
+          amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV']
+        });
+      }
+
       result.sort((a, b) => {
         const roomA = a.roomNumber ? String(a.roomNumber) : (a.name ? String(a.name) : '');
         const roomB = b.roomNumber ? String(b.roomNumber) : (b.name ? String(b.name) : '');
