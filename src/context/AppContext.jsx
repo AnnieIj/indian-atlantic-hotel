@@ -76,6 +76,17 @@ export const AppProvider = ({ children }) => {
       const { data } = await api.get('/rooms');
       let result = Array.isArray(data) ? data : [];
 
+      // Filter out Room 113 from the website
+      result = result.filter(r => String(r.roomNumber) !== '113');
+
+      // Frontend override for room prices
+      result = result.map(r => {
+        if (String(r.roomNumber) === '205' || String(r.roomNumber) === '209') {
+          return { ...r, price: 46000 };
+        }
+        return r;
+      });
+
       // Local addition: Inject Room 102 since backend admin credentials are unavailable
       const hasRoom102 = result.some(r => String(r.roomNumber) === '102' || r.name?.includes('102'));
       if (!hasRoom102) {

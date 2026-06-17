@@ -5,6 +5,7 @@ import { Calendar, Users, ChevronRight, ChevronLeft, Star, Wifi, Zap, Coffee, Ut
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { AppContext } from '../context/AppContext';
+import BusinessProfileWidget from '../components/BusinessProfileWidget';
 import './Home.css';
 
 const Home = () => {
@@ -169,6 +170,13 @@ const Home = () => {
               style={{ width: '100%', borderRadius: '4px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)' }}
             />
           </motion.div>
+        </div>
+      </section>
+
+      {/* Business Profile Widget Section */}
+      <section className="section bg-light" style={{ paddingTop: '0' }}>
+        <div className="container">
+          <BusinessProfileWidget />
         </div>
       </section>
 
