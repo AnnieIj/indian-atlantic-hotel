@@ -84,6 +84,9 @@ export const AppProvider = ({ children }) => {
         if (String(r.roomNumber) === '205' || String(r.roomNumber) === '209') {
           return { ...r, price: 46000 };
         }
+        if (String(r.roomNumber) === '313') {
+          return { ...r, price: 51000, image: '/indian atlantic pics/313.51k.jpeg', name: 'Super Deluxe Room 313', type: 'Super Deluxe' };
+        }
         return r;
       });
 
@@ -101,6 +104,23 @@ export const AppProvider = ({ children }) => {
           status: 'available',
           image: '/indian atlantic pics/102.46k.jpeg',
           amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV']
+        });
+      }
+
+      // Local addition: Inject Room 313
+      const hasRoom313 = result.some(r => String(r.roomNumber) === '313' || r.name?.includes('313'));
+      if (!hasRoom313) {
+        result.push({
+          id: 'local-room-313',
+          roomNumber: '313',
+          name: 'Super Deluxe Room 313',
+          type: 'Super Deluxe',
+          description: 'A luxurious super deluxe room with premium amenities.',
+          price: 51000,
+          capacity: 2,
+          status: 'available',
+          image: '/indian atlantic pics/313.51k.jpeg',
+          amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Mini Fridge']
         });
       }
 
