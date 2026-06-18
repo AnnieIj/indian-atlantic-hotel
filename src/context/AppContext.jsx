@@ -85,7 +85,13 @@ export const AppProvider = ({ children }) => {
           return { ...r, price: 46000 };
         }
         if (String(r.roomNumber) === '313') {
-          return { ...r, price: 51000, image: '/indian atlantic pics/313.51k.jpeg', name: 'Super Deluxe Room 313', type: 'Super Deluxe' };
+          return { 
+            ...r, 
+            price: 51000, 
+            image: r.image || '/indian atlantic pics/313.51k.jpeg', 
+            name: r.name || 'Super Deluxe Room 313', 
+            type: r.type || 'Super Deluxe' 
+          };
         }
         return r;
       });
