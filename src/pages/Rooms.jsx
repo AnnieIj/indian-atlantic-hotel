@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
+import Seo from '../components/Seo';
 import './Rooms.css';
 
 const Rooms = () => {
@@ -47,6 +48,11 @@ const Rooms = () => {
 
   return (
     <main className="rooms-page bg-light" style={{ minHeight: '80vh' }}>
+      <Seo
+        title="Rooms & Suites in Agbor, Delta State"
+        description="Browse deluxe rooms, executive rooms, and suites at Indian Atlantic Hotel and Suites in Agbor, Delta State. Compare prices, check availability, and book the perfect room for your stay in Agbor."
+        path="/rooms"
+      />
       <div className="container pt-32 pb-12">
         <div className="rooms-header mb-8">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>

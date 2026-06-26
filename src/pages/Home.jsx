@@ -5,6 +5,7 @@ import { Calendar, Users, ChevronRight, ChevronLeft, Star, Wifi, Zap, Coffee, Ut
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { AppContext } from '../context/AppContext';
+import Seo from '../components/Seo';
 import './Home.css';
 
 const Home = () => {
@@ -66,6 +67,10 @@ const Home = () => {
   };
 
   const faqs = [
+    { question: "Where is Indian Atlantic Hotel and Suites located in Agbor?", answer: "Indian Atlantic Hotel and Suites is located at 8 Cemetery Street, off Old Lagos-Asaba Road, Boji Boji, Agbor, Delta State, Nigeria. We are easy to reach for guests travelling from Asaba, Benin City, Onitsha and across Delta State." },
+    { question: "What is the best hotel in Agbor, Delta State?", answer: "Indian Atlantic Hotel and Suites is one of the best luxury hotels in Agbor, Delta State, offering deluxe rooms and suites, 24/7 power supply, free Wi-Fi, 24-hour security, and world-class hospitality at affordable rates." },
+    { question: "How far is the hotel from Asaba and Benin City?", answer: "Agbor sits between Asaba and Benin City along the Lagos-Asaba expressway, making Indian Atlantic Hotel and Suites a convenient stop for travellers from Asaba, Benin, Onitsha and other parts of Delta and Edo State." },
+    { question: "Do you offer affordable hotel rooms and suites in Agbor for booking online?", answer: "Yes. You can book deluxe rooms, executive rooms, and suites in Agbor directly on our website. We offer comfortable, affordable accommodation in Delta State with secure online booking and instant WhatsApp support." },
     { question: "What are the check-in and check-out times?", answer: "Check-in time is from 2:00 PM, and check-out is by 12:00 PM. Early check-in or late check-out can be arranged based on availability." },
     { question: "Is there a 24/7 power supply?", answer: "Yes, we guarantee uninterrupted power supply 24/7 with our industrial-grade backup generators." },
     { question: "Do you offer airport pickup services?", answer: "Yes, we can arrange airport shuttle services for our guests. Please contact us in advance to schedule your pickup." },
@@ -75,6 +80,11 @@ const Home = () => {
 
   return (
     <div className="home-page">
+      <Seo
+        title="Luxury Hotel in Agbor, Delta State"
+        description="Book your stay at Indian Atlantic Hotel and Suites, a luxury hotel in Agbor, Delta State. Enjoy 24/7 power, free Wi-Fi, top security, and elegant rooms & suites. Ideal for guests from Asaba, Benin & Onitsha."
+        path="/"
+      />
       <section className="hero">
         <div className="hero-overlay"></div>
         <div className="container hero-content">
@@ -423,6 +433,19 @@ const Home = () => {
             <h2>Frequently Asked Questions</h2>
             <div className="divider"></div>
           </motion.div>
+
+          <motion.p
+            className="text-center text-muted"
+            style={{ maxWidth: '760px', margin: '0 auto', lineHeight: 1.7 }}
+            {...fadeInUp}
+          >
+            Looking for the best hotels in Agbor, Delta State? Indian Atlantic Hotel and
+            Suites offers luxury rooms and suites in the heart of Agbor, off Old Lagos-Asaba
+            Road in Boji Boji. Whether you are visiting from Asaba, Benin City, Onitsha or
+            anywhere across Delta State, our hotel combines 24/7 power supply, free Wi-Fi,
+            round-the-clock security, and warm hospitality — making us a top choice for
+            comfortable, affordable accommodation in Agbor.
+          </motion.p>
 
           <div className="faq-grid mt-12" style={{ maxWidth: '800px', margin: '3rem auto 0' }}>
             {faqs.map((faq, idx) => (

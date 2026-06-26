@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { Users, CheckCircle, XCircle, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import Seo from '../components/Seo';
 import './RoomDetails.css';
 
 const RoomDetails = () => {
@@ -71,6 +72,12 @@ const RoomDetails = () => {
 
   return (
     <main className="room-details bg-light">
+      <Seo
+        title={`${room.name} — Agbor, Delta State`}
+        description={`${room.name} (${room.type}) at Indian Atlantic Hotel and Suites in Agbor, Delta State.${room.description ? ` ${room.description}` : ''} Book online for a comfortable stay in Agbor.`}
+        path={`/room/${room.id}`}
+        image={room.image}
+      />
       <div className="container breadcrumb-container pt-32">
         <div className="breadcrumb">
           <Link to="/">Home</Link> <span>/</span> 

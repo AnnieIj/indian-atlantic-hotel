@@ -1,0 +1,12 @@
+# Indian Atlantic Hotel and Suites - robots.txt
+# Allow search engines to crawl the public site, block private admin/checkout areas.
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /checkout
+Disallow: /booking-status/
+
+# Sitemap location
+Sitemap: https://indianatlantichotel.com/sitemap.xml
