@@ -229,10 +229,10 @@ const Home = () => {
                       loading="lazy"
                       onLoad={(e) => e.target.classList.add('loaded')}
                     />
-                    <div className="room-info">
-                      <h3>{room.name}</h3>
-                      <div className="price">₦{room.price.toLocaleString()} <span>/ night</span></div>
-                      <p className="desc">{room.description}</p>
+                    <div className="room-info" style={{ textAlign: 'center' }}>
+                      <h3>{room.name ? room.name.replace(/\b\d+\b/g, '').replace(/\s+/g, ' ').trim() : room.name}</h3>
+                      <div className="price" style={{ textAlign: 'center' }}>₦{room.price.toLocaleString()} <span>/ night</span></div>
+                      <p className="desc" style={{ textAlign: 'center' }}>{room.description}</p>
                       <Link to={`/room/${room.id}`} className="btn btn-outline" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                         View Details <ChevronRight size={18} />
                       </Link>

@@ -151,7 +151,7 @@ export const AppProvider = ({ children }) => {
       // Strip numbers from room names for display
       result = result.map(r => ({
         ...r,
-        name: r.name ? r.name.replace(/\\b\\d+\\b/g, '').replace(/\\s+/g, ' ').trim() : r.name
+        name: r.name ? r.name.replace(/\b\d+\b/g, '').replace(/\s+/g, ' ').trim() : r.name
       }));
 
       roomsCache = { data: result, fetchedAt: Date.now() };
