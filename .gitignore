@@ -26,3 +26,6 @@ dist-ssr
 # Env files (secrets must never be committed)
 .env
 .env.*
+
+# Nested backend repo clone (has its own git repo)
+backend/
