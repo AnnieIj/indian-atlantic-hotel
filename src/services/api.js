@@ -1,4 +1,4 @@
-const BASE_URL = 'https://indian-atlantichotelbackend.onrender.com';
+const BASE_URL = 'https://rskpdgcshpbsupflgsiv.supabase.co/functions/v1/api';
 
 const getHeaders = (isFormData = false) => {
   const token = localStorage.getItem('token');

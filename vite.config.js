@@ -6,9 +6,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://indian-atlantichotelbackend.onrender.com',
+        target: 'https://rskpdgcshpbsupflgsiv.supabase.co',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path.replace(/^\/api/, '/functions/v1/api'),
       },
     },
   },
