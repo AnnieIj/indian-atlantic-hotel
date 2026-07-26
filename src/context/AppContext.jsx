@@ -89,7 +89,7 @@ export const AppProvider = ({ children }) => {
             ...r, 
             price: 51000, 
             image: r.image || '/indian atlantic pics/313.51k.jpeg', 
-            name: r.name || 'Super Deluxe Room', 
+            name: r.name || 'Super Deluxe Room 313', 
             type: r.type || 'Super Deluxe' 
           };
         }
@@ -102,7 +102,7 @@ export const AppProvider = ({ children }) => {
         result.push({
           id: 'local-room-102',
           roomNumber: '102',
-          name: 'Deluxe Room',
+          name: 'Deluxe Room 102',
           type: 'Deluxe',
           description: 'A cozy and modern deluxe room with essential amenities for a comfortable stay.',
           price: 46000,
@@ -119,7 +119,7 @@ export const AppProvider = ({ children }) => {
         result.push({
           id: 'local-room-313',
           roomNumber: '313',
-          name: 'Super Deluxe Room',
+          name: 'Super Deluxe Room 313',
           type: 'Super Deluxe',
           description: 'A luxurious super deluxe room with premium amenities.',
           price: 51000,
@@ -147,12 +147,6 @@ export const AppProvider = ({ children }) => {
 
       // Rooms (images and prices) now come straight from the database, so
       // admins fully control them. No frontend overrides.
-
-      // Strip numbers from room names for display
-      result = result.map(r => ({
-        ...r,
-        name: r.name ? r.name.replace(/\b\d+\b/g, '').replace(/\s+/g, ' ').trim() : r.name
-      }));
 
       roomsCache = { data: result, fetchedAt: Date.now() };
       setRooms(result);

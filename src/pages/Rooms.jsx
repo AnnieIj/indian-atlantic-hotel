@@ -148,19 +148,19 @@ const Rooms = () => {
                     </span>
                   </div>
 
-                  <div className="room-info" style={{ padding: '1.5rem', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', marginBottom: '0.5rem' }}>
-                      <h3 style={{ margin: '0 0 0.4rem 0', fontSize: '1.25rem' }}>{room.name ? room.name.replace(/\b\d+\b/g, '').replace(/\s+/g, ' ').trim() : room.name}</h3>
+                  <div className="room-info" style={{ padding: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{room.name}</h3>
                       <span style={{ fontSize: '0.85rem', color: '#64748b', backgroundColor: '#f1f5f9', padding: '0.2rem 0.6rem', borderRadius: '4px' }}>
                         {room.type || 'Standard'}
                       </span>
                     </div>
 
-                    <p style={{ fontWeight: "bold", color: 'var(--color-primary-navy)', fontSize: '1.1rem', margin: '0.5rem 0', textAlign: 'center' }}>
+                    <p style={{ fontWeight: "bold", color: 'var(--color-primary-navy)', fontSize: '1.1rem', margin: '0.5rem 0' }}>
                       ₦{room.price?.toLocaleString()} <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 'normal' }}>/ Night</span>
                     </p>
 
-                    <p className="desc" style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    <p className="desc" style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                       {room.description || "No description available"}
                     </p>
 
