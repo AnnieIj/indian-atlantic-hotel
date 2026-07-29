@@ -20,7 +20,9 @@ const Checkout = () => {
     firstName: '',
     lastName: '',
     email: '',
-    phone: ''
+    phone: '',
+    dobMonth: '',
+    dobDay: ''
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -86,6 +88,9 @@ const Checkout = () => {
       guestEmail: formData.email,
       guestPhone: formData.phone,
       paymentMethod,
+      ...(formData.dobMonth && formData.dobDay
+        ? { guestDateOfBirth: `${formData.dobDay} ${formData.dobMonth}` }
+        : {}),
     };
     
     const res = await createBooking(bookingData);
@@ -139,6 +144,83 @@ const Checkout = () => {
             <div className="form-group-light">
               <label>Phone Number</label>
               <input type="tel" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+            </div>
+
+            {/* Date of Birth – optional, day & month only */}
+            <div className="form-group-light">
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                Date of Birth
+                <span style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  background: 'var(--color-primary-gold, #c9a84c)',
+                  color: '#fff',
+                  borderRadius: '999px',
+                  padding: '1px 8px',
+                  letterSpacing: '0.04em'
+                }}>Optional</span>
+              </label>
+              <div className="dob-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.35rem' }}>
+                <select
+                  value={formData.dobMonth}
+                  onChange={e => setFormData({ ...formData, dobMonth: e.target.value, dobDay: '' })}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.9rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    background: '#fff',
+                    color: formData.dobMonth ? '#1e293b' : '#94a3b8',
+                    fontSize: '0.95rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="">Month</option>
+                  {[
+                    'January','February','March','April','May','June',
+                    'July','August','September','October','November','December'
+                  ].map((m, i) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={formData.dobDay}
+                  onChange={e => setFormData({ ...formData, dobDay: e.target.value })}
+                  disabled={!formData.dobMonth}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.9rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    background: !formData.dobMonth ? '#f8fafc' : '#fff',
+                    color: formData.dobDay ? '#1e293b' : '#94a3b8',
+                    fontSize: '0.95rem',
+                    cursor: formData.dobMonth ? 'pointer' : 'not-allowed',
+                    opacity: !formData.dobMonth ? 0.6 : 1
+                  }}
+                >
+                  <option value="">Day</option>
+                  {Array.from(
+                    { length: (() => {
+                      const months31 = ['January','March','May','July','August','October','December'];
+                      const months30 = ['April','June','September','November'];
+                      if (months31.includes(formData.dobMonth)) return 31;
+                      if (months30.includes(formData.dobMonth)) return 30;
+                      if (formData.dobMonth === 'February') return 29;
+                      return 31;
+                    })() },
+                    (_, i) => i + 1
+                  ).map(d => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
+              {formData.dobMonth && formData.dobDay && (
+                <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.35rem' }}>
+                  🎂 {formData.dobDay} {formData.dobMonth}
+                </p>
+              )}
             </div>
             
             <div className="payment-section mt-8">
