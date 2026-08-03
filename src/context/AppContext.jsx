@@ -76,59 +76,8 @@ export const AppProvider = ({ children }) => {
       const { data } = await api.get('/rooms');
       let result = Array.isArray(data) ? data : [];
 
-      // Filter out Room 113 from the website
-      result = result.filter(r => String(r.roomNumber) !== '113');
-
-      // Frontend override for room prices
-      result = result.map(r => {
-        if (String(r.roomNumber) === '205' || String(r.roomNumber) === '209') {
-          return { ...r, price: 46000 };
-        }
-        if (String(r.roomNumber) === '313') {
-          return { 
-            ...r, 
-            price: 51000, 
-            image: r.image || '/indian atlantic pics/313.51k.jpeg', 
-            name: r.name || 'Super Deluxe Room 313', 
-            type: r.type || 'Super Deluxe' 
-          };
-        }
-        return r;
-      });
-
-      // Local addition: Inject Room 102 since backend admin credentials are unavailable
-      const hasRoom102 = result.some(r => String(r.roomNumber) === '102' || r.name?.includes('102'));
-      if (!hasRoom102) {
-        result.push({
-          id: 'local-room-102',
-          roomNumber: '102',
-          name: 'Deluxe Room 102',
-          type: 'Deluxe',
-          description: 'A cozy and modern deluxe room with essential amenities for a comfortable stay.',
-          price: 46000,
-          capacity: 2,
-          status: 'available',
-          image: '/indian atlantic pics/102.46k.jpeg',
-          amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV']
-        });
-      }
-
-      // Local addition: Inject Room 313
-      const hasRoom313 = result.some(r => String(r.roomNumber) === '313' || r.name?.includes('313'));
-      if (!hasRoom313) {
-        result.push({
-          id: 'local-room-313',
-          roomNumber: '313',
-          name: 'Super Deluxe Room 313',
-          type: 'Super Deluxe',
-          description: 'A luxurious super deluxe room with premium amenities.',
-          price: 51000,
-          capacity: 2,
-          status: 'available',
-          image: '/indian atlantic pics/313.51k.jpeg',
-          amenities: ['Free Wi-Fi', 'Air Conditioning', 'Flat-screen TV', 'Mini Fridge']
-        });
-      }
+      // Rooms, prices, images and availability come straight from the database
+      // (admin dashboard is the single source of truth). No frontend overrides.
 
       result.sort((a, b) => {
         const roomA = a.roomNumber ? String(a.roomNumber) : (a.name ? String(a.name) : '');
@@ -144,9 +93,6 @@ export const AppProvider = ({ children }) => {
         }
         return roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: 'base' });
       });
-
-      // Rooms (images and prices) now come straight from the database, so
-      // admins fully control them. No frontend overrides.
 
       roomsCache = { data: result, fetchedAt: Date.now() };
       setRooms(result);
