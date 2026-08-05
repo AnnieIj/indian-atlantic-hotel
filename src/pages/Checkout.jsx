@@ -17,6 +17,7 @@ const Checkout = () => {
   const [room, setRoom] = useState(null);
   
   const [formData, setFormData] = useState({
+    title: '',
     firstName: '',
     lastName: '',
     email: '',
@@ -84,10 +85,11 @@ const Checkout = () => {
       roomId: room.id,
       checkIn,
       checkOut,
-      guestName: `${formData.firstName} ${formData.lastName}`,
+      guestName: `${formData.title ? formData.title + ' ' : ''}${formData.firstName} ${formData.lastName}`.trim(),
       guestEmail: formData.email,
       guestPhone: formData.phone,
       paymentMethod,
+      ...(formData.title ? { guestTitle: formData.title } : {}),
       ...(formData.dobMonth && formData.dobDay
         ? { guestDateOfBirth: `${formData.dobDay} ${formData.dobMonth}` }
         : {}),
@@ -127,6 +129,45 @@ const Checkout = () => {
         <div className="checkout-form glass-panel">
           <h2 style={{color: 'var(--color-primary-navy)'}}>Guest Details</h2>
           <form onSubmit={handlePayment} className="mt-6">
+            {/* Title */}
+            <div className="form-group-light">
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                Title
+                <span style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  background: 'var(--color-primary-gold, #c9a84c)',
+                  color: '#fff',
+                  borderRadius: '999px',
+                  padding: '1px 8px',
+                  letterSpacing: '0.04em'
+                }}>Optional</span>
+              </label>
+              <select
+                value={formData.title}
+                onChange={e => setFormData({ ...formData, title: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.9rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  background: '#fff',
+                  color: formData.title ? '#1e293b' : '#94a3b8',
+                  fontSize: '0.95rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="">Select title</option>
+                <option value="Mr">Mr</option>
+                <option value="Mrs">Mrs</option>
+                <option value="Miss">Miss</option>
+                <option value="Ms">Ms</option>
+                <option value="Dr">Dr</option>
+                <option value="Prof">Prof</option>
+                <option value="Others">Others</option>
+              </select>
+            </div>
+
             <div className="form-grid">
               <div className="form-group-light">
                 <label>First Name</label>
@@ -138,8 +179,19 @@ const Checkout = () => {
               </div>
             </div>
             <div className="form-group-light">
-              <label>Email Address</label>
-              <input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                Email Address
+                <span style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  background: 'var(--color-primary-gold, #c9a84c)',
+                  color: '#fff',
+                  borderRadius: '999px',
+                  padding: '1px 8px',
+                  letterSpacing: '0.04em'
+                }}>Optional</span>
+              </label>
+              <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="guest@example.com" />
             </div>
             <div className="form-group-light">
               <label>Phone Number</label>
