@@ -18,6 +18,7 @@ const Checkout = () => {
   
   const [formData, setFormData] = useState({
     title: '',
+    customTitle: '',
     firstName: '',
     lastName: '',
     email: '',
@@ -85,11 +86,11 @@ const Checkout = () => {
       roomId: room.id,
       checkIn,
       checkOut,
-      guestName: `${formData.title ? formData.title + ' ' : ''}${formData.firstName} ${formData.lastName}`.trim(),
+      guestName: `${formData.title === 'Others' ? formData.customTitle : formData.title ? formData.title : ''}${(formData.title === 'Others' ? formData.customTitle : formData.title) ? ' ' : ''}${formData.firstName} ${formData.lastName}`.trim(),
       guestEmail: formData.email,
       guestPhone: formData.phone,
       paymentMethod,
-      ...(formData.title ? { guestTitle: formData.title } : {}),
+      ...(formData.title ? { guestTitle: formData.title === 'Others' ? formData.customTitle : formData.title } : {}),
       ...(formData.dobMonth && formData.dobDay
         ? { guestDateOfBirth: `${formData.dobDay} ${formData.dobMonth}` }
         : {}),
@@ -131,21 +132,11 @@ const Checkout = () => {
           <form onSubmit={handlePayment} className="mt-6">
             {/* Title */}
             <div className="form-group-light">
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                Title
-                <span style={{
-                  fontSize: '0.72rem',
-                  fontWeight: 600,
-                  background: 'var(--color-primary-gold, #c9a84c)',
-                  color: '#fff',
-                  borderRadius: '999px',
-                  padding: '1px 8px',
-                  letterSpacing: '0.04em'
-                }}>Optional</span>
-              </label>
+              <label>Title</label>
               <select
                 value={formData.title}
-                onChange={e => setFormData({ ...formData, title: e.target.value })}
+                onChange={e => setFormData({ ...formData, title: e.target.value, customTitle: '' })}
+                required
                 style={{
                   width: '100%',
                   padding: '0.65rem 0.9rem',
@@ -166,6 +157,27 @@ const Checkout = () => {
                 <option value="Prof">Prof</option>
                 <option value="Others">Others</option>
               </select>
+
+              {/* Custom title input shown only when Others is selected */}
+              {formData.title === 'Others' && (
+                <input
+                  type="text"
+                  required
+                  placeholder="Please enter your title"
+                  value={formData.customTitle}
+                  onChange={e => setFormData({ ...formData, customTitle: e.target.value })}
+                  style={{
+                    width: '100%',
+                    marginTop: '0.6rem',
+                    padding: '0.65rem 0.9rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '0.95rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              )}
             </div>
 
             <div className="form-grid">
