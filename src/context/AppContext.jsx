@@ -79,6 +79,9 @@ export const AppProvider = ({ children }) => {
       // Rooms, prices, images and availability come straight from the database
       // (admin dashboard is the single source of truth). No frontend overrides.
 
+      // Filter out Room 113 per request since it doesn't exist
+      result = result.filter(r => String(r.roomNumber) !== '113');
+
       result.sort((a, b) => {
         const roomA = a.roomNumber ? String(a.roomNumber) : (a.name ? String(a.name) : '');
         const roomB = b.roomNumber ? String(b.roomNumber) : (b.name ? String(b.name) : '');
