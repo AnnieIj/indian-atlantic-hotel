@@ -38,7 +38,7 @@ const AdminLayout = () => {
             <CalendarCheck size={20} /> Bookings
           </Link>
           <Link to="/admin/payments" className={location.pathname === '/admin/payments' ? 'active' : ''}>
-            <CreditCard size={20} /> Payments
+            <CreditCard size={20} /> Payments & Revenue
           </Link>
         </nav>
         
