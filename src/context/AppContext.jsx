@@ -137,7 +137,25 @@ export const AppProvider = ({ children }) => {
   const fetchPayments = async () => {
     try {
       const { data } = await api.get('/payments');
-      setPayments(Array.isArray(data) ? data : []);
+      let paymentsData = Array.isArray(data) ? data : [];
+      
+      // Apply local status overrides
+      const overridesStr = localStorage.getItem('paymentOverrides');
+      if (overridesStr) {
+        try {
+          const overrides = JSON.parse(overridesStr);
+          paymentsData = paymentsData.map(p => {
+            if (overrides[p.id]) {
+              return { ...p, status: overrides[p.id] };
+            }
+            return p;
+          });
+        } catch (e) {
+          console.error('Error parsing local payment overrides', e);
+        }
+      }
+      
+      setPayments(paymentsData);
     } catch (err) {
       console.error('fetchPayments:', err.message);
     }
@@ -254,6 +272,12 @@ export const AppProvider = ({ children }) => {
           overrides[payment.bookingId] = bookingStatus;
           localStorage.setItem('bookingOverrides', JSON.stringify(overrides));
         }
+        
+        // Save payment status to local fallback
+        const paymentOverridesStr = localStorage.getItem('paymentOverrides') || '{}';
+        const paymentOverrides = JSON.parse(paymentOverridesStr);
+        paymentOverrides[id] = status;
+        localStorage.setItem('paymentOverrides', JSON.stringify(paymentOverrides));
       } catch (e) {}
       await fetchPayments();
       await fetchBookings();
