@@ -7,7 +7,11 @@ const AdminDashboard = () => {
 
   const totalBookings = bookings.length;
 
-  const totalRevenue = bookings.reduce((acc, b) => acc + (b.totalAmount || b.totalPrice || 0), 0);
+  // Revenue = sum of ONLY successfully paid payment amounts.
+  // Previously used sum of all booking totals (including pending/cancelled) — incorrect.
+  const totalRevenue = payments
+    .filter(p => p.status === 'success')
+    .reduce((acc, p) => acc + Number(p.amount || 0), 0);
 
   const availableRooms = rooms.filter(r => r.status === 'available').length;
 

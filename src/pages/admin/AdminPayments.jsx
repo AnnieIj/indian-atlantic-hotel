@@ -1,10 +1,10 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { AppContext } from '../../context/AppContext';
-import { CreditCard, CheckCircle, XCircle, Eye, AlertTriangle, Clock, FileText, Search } from 'lucide-react';
-import { subDays, startOfWeek, endOfWeek, subWeeks, startOfMonth, endOfMonth, subMonths, isWithinInterval, parseISO, format, isSameMonth } from 'date-fns';
+import { CreditCard, CheckCircle, XCircle, Eye, AlertTriangle, Clock, FileText, Search, RefreshCw } from 'lucide-react';
+import { subDays, startOfWeek, endOfWeek, subWeeks, startOfMonth, endOfMonth, subMonths, isWithinInterval, parseISO, format, isSameMonth, startOfDay, endOfDay } from 'date-fns';
 
 const AdminPayments = () => {
-  const { payments, bookings, confirmPayment, fetchPayments, fetchBookings } = useContext(AppContext);
+  const { payments, bookings, confirmPayment, fetchPayments, fetchBookings, paymentsLoading, paymentsError } = useContext(AppContext);
   const [actionPayment, setActionPayment] = useState(null);
   const [actionType, setActionType] = useState('');
   const [adminNotes, setAdminNotes] = useState('');
@@ -19,10 +19,14 @@ const AdminPayments = () => {
   useEffect(() => {
     fetchPayments();
     fetchBookings();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleRefresh = () => {
+    fetchPayments();
+    fetchBookings();
+  };
 
   const pendingPayments = payments.filter(p => p.status === 'pending' && p.receipt);
-  const allPayments = payments.slice().reverse();
 
   const showToast = (type, msg) => {
     setToast({ type, msg });
@@ -39,14 +43,25 @@ const AdminPayments = () => {
     if (!actionPayment) return;
     const newStatus = actionType === 'approve' ? 'success' : 'failed';
 
-    await confirmPayment(actionPayment.id, newStatus, adminNotes);
+    const result = await confirmPayment(actionPayment.id, newStatus, adminNotes);
 
-    showToast(
-      actionType === 'approve' ? 'success' : 'error',
-      actionType === 'approve'
-        ? `Payment #${actionPayment.id} approved. Booking confirmed.`
-        : `Payment #${actionPayment.id} rejected. Booking cancelled.`
-    );
+    if (result?.apiPersisted) {
+      // Backend confirmed the change
+      showToast(
+        actionType === 'approve' ? 'success' : 'error',
+        actionType === 'approve'
+          ? `Payment #${actionPayment.id.substring(0,8)} approved. Booking confirmed.`
+          : `Payment #${actionPayment.id.substring(0,8)} rejected. Booking cancelled.`
+      );
+    } else {
+      // Backend failed but localStorage override is applied locally
+      showToast(
+        'warning',
+        actionType === 'approve'
+          ? `Payment approved locally (server sync pending). Status updated on this device.`
+          : `Payment rejected locally (server sync pending). Status updated on this device.`
+      );
+    }
 
     setActionPayment(null);
     setAdminNotes('');
@@ -62,8 +77,11 @@ const AdminPayments = () => {
       success: { cls: 'badge-success', icon: <CheckCircle size={12} />, label: 'Success' },
       failed: { cls: 'badge-danger', icon: <XCircle size={12} />, label: 'Failed' },
       pending: { cls: 'badge-warning', icon: <Clock size={12} />, label: 'Pending' },
+      completed: { cls: 'badge-success', icon: <CheckCircle size={12} />, label: 'Completed' },
+      paid: { cls: 'badge-success', icon: <CheckCircle size={12} />, label: 'Paid' },
+      cancelled: { cls: 'badge-danger', icon: <XCircle size={12} />, label: 'Cancelled' },
     };
-    const s = map[status] || map.pending;
+    const s = map[status] || { cls: 'badge-warning', icon: <Clock size={12} />, label: status || 'Pending' };
     return (
       <span className={`badge ${s.cls}`} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', width: 'fit-content' }}>
         {s.icon} {s.label}
@@ -76,27 +94,55 @@ const AdminPayments = () => {
   };
 
   // --- ANALYTICS CALCULATIONS ---
-  const successfulPayments = (payments || []).filter(p => p.status === 'success');
+  // 1. Core effective arrays (payments already have paymentOverrides applied by AppContext)
+  //    isSuccessful covers 'success', 'completed', 'paid' to handle any backend status variation.
+  const isSuccessStatus = (s) => s === 'success' || s === 'completed' || s === 'paid';
+  const successfulPayments = payments.filter(p => isSuccessStatus(p.status));
+  const pendingAllPayments = payments.filter(p => p.status === 'pending');
 
-  // Top cards
-  const now = new Date();
+  // Helper for unique customer identity.
+  // Priority: guestEmail from booking > guestEmail on payment > booking.id as last resort.
+  // We deliberately avoid guestName because different people can share names.
+  // We deliberately avoid 'unknown-customer' string because all email-less guests
+  // would be counted as ONE customer, which is wrong.
+  const getCustomerId = (p) => {
+    const b = bookings.find(bk => bk.id === p.bookingId);
+    const email = b?.guestEmail || p.guestEmail;
+    // Only use email if it is a non-empty, non-whitespace string
+    if (email && email.trim()) return email.trim().toLowerCase();
+    // Fall back to the booking ID (unique per booking, not per customer, but
+    // better than grouping all email-less guests together)
+    return p.bookingId || p.id;
+  };
+
+  // Helper: get canonical booking amount (backend uses both totalAmount and totalPrice)
+  const getBookingTotal = (booking) => Number(booking.totalAmount || booking.totalPrice || 0);
+
+  // 2. Top Cards & Outstanding Calculation
+  // FIX: Do NOT mutate a shared `now` object. Use separate `new Date()` instances.
+  const todayStart = startOfDay(new Date());
+  const todayEnd = endOfDay(new Date());
+
   const getAmountForInterval = (start, end) => {
     return successfulPayments
       .filter(p => {
         const d = new Date(p.createdAt || p.created_at);
+        if (isNaN(d.getTime())) return false;
         return isWithinInterval(d, { start, end });
       })
       .reduce((sum, p) => sum + Number(p.amount || 0), 0);
   };
 
-  const todayStart = new Date(now.setHours(0,0,0,0));
-  const todayEnd = new Date(now.setHours(23,59,59,999));
   const todayAmount = getAmountForInterval(todayStart, todayEnd);
   
   const todayCustomers = new Set(
-    successfulPayments
-      .filter(p => isWithinInterval(new Date(p.createdAt || p.created_at), { start: todayStart, end: todayEnd }))
-      .map(p => p.bookingId || p.guestEmail || p.id)
+    payments
+      .filter(p => {
+        const d = new Date(p.createdAt || p.created_at);
+        if (isNaN(d.getTime())) return false;
+        return isWithinInterval(d, { start: todayStart, end: todayEnd });
+      })
+      .map(getCustomerId)
   ).size;
 
   const weekStart = startOfWeek(new Date());
@@ -107,28 +153,36 @@ const AdminPayments = () => {
   const thisMonthEnd = endOfMonth(new Date());
   const thisMonthAmount = getAmountForInterval(thisMonthStart, thisMonthEnd);
 
-  const outstandingAmount = payments
-    .filter(p => p.status === 'pending')
-    .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  // OUTSTANDING: Per-booking, max(bookingTotal - paidForBooking, 0). Then sum.
+  // This prevents double-counting when a booking has multiple payment records.
+  let calculatedOutstanding = 0;
+  (bookings || []).forEach(booking => {
+    const paidForBooking = successfulPayments
+      .filter(p => p.bookingId === booking.id)
+      .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+    const balance = Math.max(getBookingTotal(booking) - paidForBooking, 0);
+    calculatedOutstanding += balance;
+  });
+  const outstandingAmount = calculatedOutstanding;
 
-  // Daily Activity Chart (based on date filter)
+  // 3. Daily Activity Chart (based on date filter)
   const getFilteredPayments = () => {
     let start, end;
     switch (dateFilter) {
       case 'Today': start = todayStart; end = todayEnd; break;
       case 'Yesterday': 
-        const y = subDays(new Date(), 1);
-        start = new Date(y.setHours(0,0,0,0)); 
-        end = new Date(y.setHours(23,59,59,999)); 
+        start = startOfDay(subDays(new Date(), 1));
+        end = endOfDay(subDays(new Date(), 1));
         break;
-      case 'Last 7 Days': start = new Date(subDays(new Date(), 7).setHours(0,0,0,0)); end = new Date(); break;
+      case 'Last 7 Days': start = startOfDay(subDays(new Date(), 7)); end = todayEnd; break;
       case 'This Week': start = weekStart; end = weekEnd; break;
       case 'Last Week': start = startOfWeek(subWeeks(new Date(), 1)); end = endOfWeek(subWeeks(new Date(), 1)); break;
       case 'This Month': start = thisMonthStart; end = thisMonthEnd; break;
       case 'Last Month': start = startOfMonth(subMonths(new Date(), 1)); end = endOfMonth(subMonths(new Date(), 1)); break;
       default: start = thisMonthStart; end = thisMonthEnd;
     }
-    return successfulPayments.filter(p => {
+    // Return ALL payments (all statuses) in the interval to accurately count customers and transactions
+    return payments.filter(p => {
       const pDate = new Date(p.createdAt || p.created_at);
       if (isNaN(pDate.getTime())) return false;
       return isWithinInterval(pDate, { start, end });
@@ -143,11 +197,26 @@ const AdminPayments = () => {
     if (isNaN(pDate.getTime())) return;
     const dateStr = format(pDate, 'MMM dd, yyyy');
     if (!dailyActivityMap[dateStr]) {
-      dailyActivityMap[dateStr] = { date: dateStr, paymentsCount: 0, amount: 0, customerIds: new Set(), transactions: [] };
+      dailyActivityMap[dateStr] = { 
+        date: dateStr, 
+        transactionsCount: 0, 
+        successCount: 0,
+        pendingCount: 0,
+        revenue: 0, 
+        customerIds: new Set(), 
+        transactions: [] 
+      };
     }
-    dailyActivityMap[dateStr].paymentsCount += 1;
-    dailyActivityMap[dateStr].amount += Number(p.amount || 0);
-    dailyActivityMap[dateStr].customerIds.add(p.bookingId || p.guestEmail || p.id);
+    
+    dailyActivityMap[dateStr].transactionsCount += 1;
+    dailyActivityMap[dateStr].customerIds.add(getCustomerId(p));
+    
+    if (isSuccessStatus(p.status)) {
+      dailyActivityMap[dateStr].successCount += 1;
+      dailyActivityMap[dateStr].revenue += Number(p.amount || 0);
+    } else if (p.status === 'pending') {
+      dailyActivityMap[dateStr].pendingCount += 1;
+    }
     
     const booking = (bookings || []).find(b => b.id === p.bookingId);
     dailyActivityMap[dateStr].transactions.push({
@@ -160,16 +229,18 @@ const AdminPayments = () => {
 
   const dailyActivityList = Object.values(dailyActivityMap).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  // Monthly summary
-  const monthlyPayments = successfulPayments.filter(p => {
+  // 4. Monthly summary — includes all statuses, separates revenue
+  const monthlyPayments = payments.filter(p => {
     const pDate = new Date(p.createdAt || p.created_at);
     if (isNaN(pDate.getTime())) return false;
     return isSameMonth(pDate, selectedMonth);
   });
   
-  const monthlyCustomers = new Set(monthlyPayments.map(p => p.bookingId || p.guestEmail || p.id)).size;
-  const monthlyTotalAmount = monthlyPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
-  const monthlyTotalPayments = monthlyPayments.length;
+  const monthlyCustomers = new Set(monthlyPayments.map(getCustomerId)).size;
+  const monthlyTotalTransactions = monthlyPayments.length;
+  const monthlyTotalRevenue = monthlyPayments
+    .filter(p => isSuccessStatus(p.status))
+    .reduce((sum, p) => sum + Number(p.amount || 0), 0);
   
   const monthlyActivityMap = {};
   monthlyPayments.forEach(p => {
@@ -177,15 +248,20 @@ const AdminPayments = () => {
     if (isNaN(pDate.getTime())) return;
     const dateStr = format(pDate, 'MMM d');
     if (!monthlyActivityMap[dateStr]) {
-      monthlyActivityMap[dateStr] = { dateStr, amount: 0, customers: new Set(), timestamp: pDate.getTime() };
+      monthlyActivityMap[dateStr] = { dateStr, revenue: 0, transactionsCount: 0, customers: new Set(), timestamp: pDate.getTime() };
     }
-    monthlyActivityMap[dateStr].amount += Number(p.amount || 0);
-    monthlyActivityMap[dateStr].customers.add(p.bookingId || p.guestEmail || p.id);
+    
+    monthlyActivityMap[dateStr].transactionsCount += 1;
+    monthlyActivityMap[dateStr].customers.add(getCustomerId(p));
+    if (isSuccessStatus(p.status)) {
+      monthlyActivityMap[dateStr].revenue += Number(p.amount || 0);
+    }
   });
   
   const monthlyActivityList = Object.values(monthlyActivityMap).sort((a, b) => a.timestamp - b.timestamp);
 
-  // Search History
+  // 5. Search History — all payments reversed (newest first)
+  const allPayments = payments.slice().reverse();
   const searchedPayments = allPayments.filter(p => {
     if (!searchTerm) return true;
     const s = searchTerm.toLowerCase();
@@ -196,20 +272,72 @@ const AdminPayments = () => {
     return gName.includes(s) || bId.includes(s) || pId.includes(s);
   });
 
+  // --- RENDER ---
+
+  // Loading state
+  if (paymentsLoading && payments.length === 0) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px', gap: '1rem' }}>
+        <RefreshCw size={36} style={{ color: 'var(--color-primary-navy)', animation: 'spin 1s linear infinite' }} />
+        <p style={{ color: '#64748b', fontWeight: 600 }}>Loading payment data...</p>
+      </div>
+    );
+  }
+
+  // Error state
+  if (paymentsError && payments.length === 0) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px', gap: '1rem', textAlign: 'center', padding: '2rem' }}>
+        <AlertTriangle size={48} style={{ color: '#ef4444' }} />
+        <h3 style={{ color: '#1e293b', margin: 0 }}>Unable to Load Payment Data</h3>
+        <p style={{ color: '#64748b', maxWidth: '400px' }}>{paymentsError}</p>
+        <button
+          onClick={handleRefresh}
+          style={{ background: 'var(--color-primary-navy)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.75rem 1.5rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+        >
+          <RefreshCw size={16} /> Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', position: 'relative' }}>
 
+      {/* ===== TOAST ===== */}
       {toast && (
         <div style={{
           position: 'fixed', top: '1.5rem', right: '1.5rem', zIndex: 9999,
-          background: toast.type === 'success' ? '#10b981' : '#ef4444',
+          background: toast.type === 'success' ? '#10b981' : toast.type === 'warning' ? '#f59e0b' : '#ef4444',
           color: '#fff', padding: '1rem 1.5rem', borderRadius: '12px',
           boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
           display: 'flex', alignItems: 'center', gap: '0.75rem',
-          fontWeight: 600, fontSize: '0.9rem', maxWidth: '360px'
+          fontWeight: 600, fontSize: '0.9rem', maxWidth: '400px'
         }}>
-          {toast.type === 'success' ? <CheckCircle size={20} /> : <XCircle size={20} />}
+          {toast.type === 'success' ? <CheckCircle size={20} /> : toast.type === 'warning' ? <AlertTriangle size={20} /> : <XCircle size={20} />}
           {toast.msg}
+        </div>
+      )}
+
+      {/* ===== PAGE HEADER WITH REFRESH ===== */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <h2 style={{ margin: 0, color: 'var(--color-primary-navy)', fontSize: '1.5rem' }}>Payments &amp; Revenue</h2>
+        <button
+          onClick={handleRefresh}
+          disabled={paymentsLoading}
+          style={{ background: 'var(--color-primary-navy)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.6rem 1.2rem', fontWeight: 600, cursor: paymentsLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: paymentsLoading ? 0.7 : 1 }}
+        >
+          <RefreshCw size={16} style={{ animation: paymentsLoading ? 'spin 1s linear infinite' : 'none' }} />
+          {paymentsLoading ? 'Refreshing...' : 'Refresh'}
+        </button>
+      </div>
+
+      {/* Soft error banner when data already loaded but refresh fails */}
+      {paymentsError && payments.length > 0 && (
+        <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '10px', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#92400e' }}>
+          <AlertTriangle size={16} />
+          <span>Data may be stale: {paymentsError}</span>
+          <button onClick={handleRefresh} style={{ marginLeft: 'auto', background: 'none', border: '1px solid #f59e0b', borderRadius: '6px', padding: '0.25rem 0.75rem', color: '#92400e', fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem' }}>Retry</button>
         </div>
       )}
 
@@ -224,15 +352,11 @@ const AdminPayments = () => {
           <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1e293b' }}>{todayCustomers}</div>
         </div>
         <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-          <div style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.5rem' }}>This Week</div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1e293b' }}>₦{weekAmount.toLocaleString()}</div>
-        </div>
-        <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-          <div style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.5rem' }}>This Month</div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1e293b' }}>₦{thisMonthAmount.toLocaleString()}</div>
+          <div style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Total Pending</div>
+          <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1e293b' }}>{pendingAllPayments.length} <span style={{fontSize:'1rem', fontWeight: 600, color: '#94a3b8'}}>tx</span></div>
         </div>
         <div style={{ background: '#fffbf1', padding: '1.5rem', borderRadius: '12px', border: '1px solid #fde68a', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-          <div style={{ color: '#b45309', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Outstanding (Pending)</div>
+          <div style={{ color: '#b45309', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Total Outstanding</div>
           <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#92400e' }}>₦{outstandingAmount.toLocaleString()}</div>
         </div>
       </div>
@@ -340,8 +464,8 @@ const AdminPayments = () => {
                 <tr>
                   <th>Date</th>
                   <th style={{ textAlign: 'right' }}>Customers</th>
-                  <th style={{ textAlign: 'right' }}>Payments</th>
-                  <th style={{ textAlign: 'right' }}>Amount</th>
+                  <th style={{ textAlign: 'right' }}>Transactions</th>
+                  <th style={{ textAlign: 'right' }}>Revenue</th>
                   <th style={{ textAlign: 'center' }}>Action</th>
                 </tr>
               </thead>
@@ -351,8 +475,13 @@ const AdminPayments = () => {
                     <tr key={activity.date}>
                       <td style={{ fontWeight: 600, color: '#334155' }}>{activity.date}</td>
                       <td style={{ textAlign: 'right', fontWeight: 500 }}>{activity.customerIds.size}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 500 }}>{activity.paymentsCount}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: '#10b981' }}>₦{activity.amount.toLocaleString()}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 500 }}>
+                        {activity.transactionsCount} 
+                        <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginTop: '0.1rem' }}>
+                          ({activity.successCount} success, {activity.pendingCount} pend)
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right', fontWeight: 700, color: '#10b981' }}>₦{activity.revenue.toLocaleString()}</td>
                       <td style={{ textAlign: 'center' }}>
                         <button 
                           onClick={() => setSelectedDateDetails(activity)}
@@ -403,11 +532,11 @@ const AdminPayments = () => {
           </div>
           <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', flex: 1, minWidth: '200px' }}>
             <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.5rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Transactions</div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#0f172a' }}>{monthlyTotalPayments}</div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#0f172a' }}>{monthlyTotalTransactions}</div>
           </div>
           <div style={{ background: '#f0fdf4', padding: '1.5rem', borderRadius: '12px', border: '1px solid #bbf7d0', flex: 2, minWidth: '250px' }}>
             <div style={{ color: '#166534', fontSize: '0.9rem', marginBottom: '0.5rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Revenue</div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#15803d' }}>₦{monthlyTotalAmount.toLocaleString()}</div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#15803d' }}>₦{monthlyTotalRevenue.toLocaleString()}</div>
           </div>
         </div>
 
@@ -419,12 +548,14 @@ const AdminPayments = () => {
                  <div key={item.dateStr} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9' }}>
                    <div style={{ fontWeight: 600, color: '#475569', width: '100px' }}>{item.dateStr}</div>
                    <div style={{ color: '#94a3b8' }}>→</div>
-                   <div style={{ fontWeight: 700, color: '#1e293b' }}>₦{item.amount.toLocaleString()}</div>
-                   <div style={{ color: '#64748b', fontSize: '0.85rem', marginLeft: 'auto' }}>{item.customers.size} customer{item.customers.size !== 1 ? 's' : ''}</div>
+                   <div style={{ fontWeight: 700, color: '#1e293b' }}>₦{item.revenue.toLocaleString()}</div>
+                   <div style={{ color: '#64748b', fontSize: '0.85rem', marginLeft: 'auto' }}>
+                      {item.customers.size} customer{item.customers.size !== 1 ? 's' : ''} ({item.transactionsCount} tx)
+                   </div>
                  </div>
                ))
              ) : (
-               <div style={{ color: '#94a3b8', fontStyle: 'italic', padding: '1rem 0' }}>No payments recorded in this month.</div>
+               <div style={{ color: '#94a3b8', fontStyle: 'italic', padding: '1rem 0' }}>No transactions recorded in this month.</div>
              )}
           </div>
         </div>
@@ -533,7 +664,13 @@ const AdminPayments = () => {
                         <td style={{ color: '#64748b', fontSize: '0.9rem' }}>{tx.roomName}</td>
                         <td style={{ textAlign: 'right', fontWeight: 700, color: '#0f172a' }}>₦{Number(tx.amount || 0).toLocaleString()}</td>
                         <td style={{ textAlign: 'center' }}>
-                          <span style={{ background: '#dcfce7', color: '#166534', padding: '0.25rem 0.75rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700 }}>Paid</span>
+                          {tx.status === 'success' ? (
+                            <span style={{ background: '#dcfce7', color: '#166534', padding: '0.25rem 0.75rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700 }}>Success</span>
+                          ) : tx.status === 'pending' ? (
+                            <span style={{ background: '#fef3c7', color: '#92400e', padding: '0.25rem 0.75rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700 }}>Pending</span>
+                          ) : (
+                            <span style={{ background: '#fee2e2', color: '#991b1b', padding: '0.25rem 0.75rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700 }}>Failed</span>
+                          )}
                         </td>
                         <td style={{ textAlign: 'right', color: '#64748b', fontSize: '0.9rem' }}>{tx.paymentTime}</td>
                       </tr>
@@ -544,7 +681,7 @@ const AdminPayments = () => {
             </div>
 
             <div style={{ padding: '1.5rem 2rem', background: '#f8fafc', borderTop: '1px solid #e2e8f0', borderBottomLeftRadius: '16px', borderBottomRightRadius: '16px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-              <div style={{ fontWeight: 800, fontSize: '1.5rem', color: '#10b981' }}>Total Received: ₦{selectedDateDetails.amount.toLocaleString()}</div>
+              <div style={{ fontWeight: 800, fontSize: '1.5rem', color: '#10b981' }}>Total Received: ₦{selectedDateDetails.revenue.toLocaleString()}</div>
             </div>
             
           </div>

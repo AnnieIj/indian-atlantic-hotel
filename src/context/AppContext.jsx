@@ -37,7 +37,8 @@ api.interceptors.response.use(
 export const AppContext = createContext({
   rooms: [], setRooms: () => {}, updateRoom: () => {}, fetchRooms: async () => {}, loading: false, roomsError: null,
   bookings: [], setBookings: () => {}, updateBookingStatus: () => {}, createBooking: async () => ({}), checkAvailability: async () => true, fetchBookings: async () => {},
-  payments: [], setPayments: () => {}, fetchPayments: async () => {}, confirmPayment: async () => {},
+  payments: [], setPayments: () => {}, fetchPayments: async () => {}, confirmPayment: async () => ({}),
+  paymentsLoading: false, paymentsError: null,
   users: [], setUsers: () => {},
   testimonials: [], addTestimonial: () => {},
   currentUser: null, login: async () => {}, logout: () => {}
@@ -62,6 +63,8 @@ export const AppProvider = ({ children }) => {
   });
   const [loading, setLoading] = useState(false);
   const [roomsError, setRoomsError] = useState(null);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [paymentsError, setPaymentsError] = useState(null);
 
   // ── Fetchers ────────────────────────────────────────────
   const fetchRooms = async (force = false) => {
@@ -135,11 +138,13 @@ export const AppProvider = ({ children }) => {
   };
 
   const fetchPayments = async () => {
+    setPaymentsLoading(true);
+    setPaymentsError(null);
     try {
       const { data } = await api.get('/payments');
       let paymentsData = Array.isArray(data) ? data : [];
       
-      // Apply local status overrides
+      // Apply local status overrides (client-side fallback when backend PATCH doesn't persist)
       const overridesStr = localStorage.getItem('paymentOverrides');
       if (overridesStr) {
         try {
@@ -158,6 +163,9 @@ export const AppProvider = ({ children }) => {
       setPayments(paymentsData);
     } catch (err) {
       console.error('fetchPayments:', err.message);
+      setPaymentsError(err.message || 'Failed to load payment data.');
+    } finally {
+      setPaymentsLoading(false);
     }
   };
 
@@ -256,32 +264,41 @@ export const AppProvider = ({ children }) => {
   };
 
   // ── Payments ─────────────────────────────────────────────
+  // Returns { success, apiPersisted } so the caller can show accurate feedback.
   const confirmPayment = async (id, status, adminNotes) => {
+    let apiPersisted = false;
     try {
       await api.patch(`/payments/${id}/confirm`, { status, adminNotes });
+      apiPersisted = true;
     } catch (err) {
       console.error('confirmPayment api error:', err.message);
-    } finally {
-      // Cascade payment status to booking status using local fallback
-      try {
-        const payment = payments.find(p => p.id === id);
-        if (payment) {
-          const bookingStatus = status === 'success' ? 'confirmed' : 'cancelled';
-          const overridesStr = localStorage.getItem('bookingOverrides') || '{}';
-          const overrides = JSON.parse(overridesStr);
-          overrides[payment.bookingId] = bookingStatus;
-          localStorage.setItem('bookingOverrides', JSON.stringify(overrides));
-        }
-        
-        // Save payment status to local fallback
-        const paymentOverridesStr = localStorage.getItem('paymentOverrides') || '{}';
-        const paymentOverrides = JSON.parse(paymentOverridesStr);
-        paymentOverrides[id] = status;
-        localStorage.setItem('paymentOverrides', JSON.stringify(paymentOverrides));
-      } catch (e) {}
-      await fetchPayments();
-      await fetchBookings();
+      // Do not rethrow — apply localStorage fallback below so UI stays responsive.
     }
+
+    // Always apply local fallback so the admin UI reflects the change immediately.
+    try {
+      const payment = payments.find(p => p.id === id);
+      if (payment) {
+        const bookingStatus = status === 'success' ? 'confirmed' : 'cancelled';
+        const bookingOverridesStr = localStorage.getItem('bookingOverrides') || '{}';
+        const bookingOverrides = JSON.parse(bookingOverridesStr);
+        bookingOverrides[payment.bookingId] = bookingStatus;
+        localStorage.setItem('bookingOverrides', JSON.stringify(bookingOverrides));
+      }
+      
+      // Save payment status to local fallback
+      const paymentOverridesStr = localStorage.getItem('paymentOverrides') || '{}';
+      const paymentOverrides = JSON.parse(paymentOverridesStr);
+      paymentOverrides[id] = status;
+      localStorage.setItem('paymentOverrides', JSON.stringify(paymentOverrides));
+    } catch (e) {
+      console.error('localStorage override error:', e);
+    }
+
+    await fetchPayments();
+    await fetchBookings();
+
+    return { success: true, apiPersisted };
   };
 
   // ── Testimonials (local only) ─────────────────────────────
@@ -296,6 +313,7 @@ export const AppProvider = ({ children }) => {
         rooms, setRooms, updateRoom, fetchRooms, loading, roomsError,
         bookings, setBookings, updateBookingStatus, createBooking, checkAvailability, fetchBookings,
         payments, setPayments, fetchPayments, confirmPayment,
+        paymentsLoading, paymentsError,
         users, setUsers,
         testimonials, addTestimonial,
         currentUser, login, logout
