@@ -32,7 +32,9 @@ const AddRoom = () => {
             const token = localStorage.getItem("token");
 
             const res = await axios.post(
-                "https://indian-atlantichotelbackend.onrender.com/rooms",
+                // The Render backend is gone; everything goes through the
+                // Supabase Edge Function behind the /api rewrite.
+                "/api/rooms",
                 {
                     ...formData,
                     price: Number(formData.price),

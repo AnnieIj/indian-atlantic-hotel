@@ -1,10 +1,14 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { CheckCircle, Clock, XCircle, ArrowLeft, RefreshCw, Hash, BedDouble, User, CreditCard, CalendarDays, CalendarCheck } from 'lucide-react';
 import axios from 'axios';
+import { BOOKING_STATUS, normalizeBookingStatus, bookingStatusLabel, bookingStatusBadge } from '../utils/status';
 
-const BASE_URL = 'https://indian-atlantichotelbackend.onrender.com';
+// The old Render backend is dead. Every request goes to the Supabase Edge
+// Function through the /api rewrite (vercel.json in prod, vite proxy in dev).
+const BASE_URL = '/api';
+const POLL_MS = 30000;
 
 const BookingStatus = () => {
   const { bookingId } = useParams();
@@ -12,33 +16,62 @@ const BookingStatus = () => {
   const [booking, setBooking] = useState(null);
   const [payment, setPayment] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = useCallback(async ({ preferServer = false } = {}) => {
+    // The context copy is only useful on the first paint right after booking;
+    // once we are waiting on an admin decision the server is the truth.
+    let foundBooking = preferServer ? null : bookings.find(b => b.id === bookingId);
+
+    if (!foundBooking) {
+      try {
+        const res = await axios.get(`${BASE_URL}/bookings/${bookingId}`);
+        foundBooking = res.data;
+      } catch (err) {
+        console.error('Failed to fetch booking:', err.message);
+      }
+    }
+
+    if (foundBooking) {
+      setBooking(foundBooking);
+      // The booking payload embeds its payment; fall back to context.
+      setPayment(
+        foundBooking.payment || payments.find(p => p.bookingId === foundBooking.id) || null,
+      );
+    }
+    return foundBooking;
+  }, [bookingId, bookings, payments]);
 
   useEffect(() => {
-    const load = async () => {
-      // First try to find in context (fast path)
-      let foundBooking = bookings.find(b => b.id === bookingId);
-      
-      // If not found in context (e.g. page refresh), fetch directly from API
-      if (!foundBooking) {
-        try {
-          const res = await axios.get(`${BASE_URL}/bookings/${bookingId}`);
-          foundBooking = res.data;
-        } catch (err) {
-          console.error('Failed to fetch booking:', err.message);
-        }
-      }
+    let cancelled = false;
+    (async () => {
+      await load();
+      if (!cancelled) setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [bookingId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-      if (foundBooking) {
-        setBooking(foundBooking);
-        // Look for payment in context first, then try fetching
-        const foundPayment = payments.find(p => p.bookingId === foundBooking.id);
-        setPayment(foundPayment || null);
-      }
-      setLoading(false);
-    };
+  // Keep the latest loader in a ref so the poll interval below is not torn down
+  // and rebuilt every time a fetch replaces the booking object.
+  const loadRef = useRef(load);
+  useEffect(() => { loadRef.current = load; }, [load]);
 
-    load();
-  }, [bookingId, bookings, payments]);
+  const isPending = !!booking && normalizeBookingStatus(booking.status) === BOOKING_STATUS.PENDING;
+
+  // "Checking for updates" used to be decoration — nothing actually re-read the
+  // booking, so a guest sat on "Verification In Progress" even after an admin
+  // approved the payment. Poll the server while the booking is still pending.
+  useEffect(() => {
+    if (!isPending) return undefined;
+    const timer = setInterval(() => { loadRef.current({ preferServer: true }); }, POLL_MS);
+    return () => clearInterval(timer);
+  }, [isPending]);
+
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    await load({ preferServer: true });
+    setRefreshing(false);
+  };
 
   if (loading) {
     return (
@@ -66,8 +99,8 @@ const BookingStatus = () => {
   }
 
   const renderStatus = () => {
-    switch (booking.status) {
-      case 'pending':
+    switch (normalizeBookingStatus(booking.status)) {
+      case BOOKING_STATUS.PENDING:
         // existing pending card is fine for Bank Transfer
         // For Pay on Arrival, status will be 'confirmed' already so no change needed
         return (
@@ -79,12 +112,17 @@ const BookingStatus = () => {
               This typically takes 30-60 minutes during business hours.
             </p>
             <div className="mt-8 p-4 bg-light rounded-lg inline-block">
-              <RefreshCw size={16} className="spin mr-2 inline" /> 
-              <span className="text-sm font-medium">Checking for updates every minute...</span>
+              <RefreshCw size={16} className={`mr-2 inline ${refreshing ? 'spin' : ''}`} />
+              <span className="text-sm font-medium">Checking for updates every 30 seconds...</span>
+            </div>
+            <div className="mt-4">
+              <button className="btn btn-outline" onClick={handleManualRefresh} disabled={refreshing}>
+                {refreshing ? 'Checking...' : 'Check now'}
+              </button>
             </div>
           </div>
         );
-      case 'confirmed':
+      case BOOKING_STATUS.CONFIRMED:
         return (
           <div className="status-card approved glass-panel text-center py-12 px-6">
             <CheckCircle size={64} className="text-success mx-auto mb-6" />
@@ -100,7 +138,7 @@ const BookingStatus = () => {
             </div>
           </div>
         );
-      case 'cancelled':
+      case BOOKING_STATUS.CANCELLED:
         return (
           <div className="status-card rejected glass-panel text-center py-12 px-6">
             <XCircle size={64} className="text-danger mx-auto mb-6" />
@@ -114,10 +152,35 @@ const BookingStatus = () => {
             </div>
           </div>
         );
+      case BOOKING_STATUS.CHECKED_IN:
+        return (
+          <div className="status-card approved glass-panel text-center py-12 px-6">
+            <CheckCircle size={64} className="text-success mx-auto mb-6" />
+            <h2 className="text-navy">Checked In</h2>
+            <p className="mt-4 text-muted max-w-md mx-auto">
+              You are checked in. Enjoy your stay at Indian Atlantic Hotel and Suites.
+            </p>
+          </div>
+        );
+      case BOOKING_STATUS.CHECKED_OUT:
+        return (
+          <div className="status-card glass-panel text-center py-12 px-6">
+            <CheckCircle size={64} className="text-muted mx-auto mb-6" />
+            <h2 className="text-navy">Stay Completed</h2>
+            <p className="mt-4 text-muted max-w-md mx-auto">
+              Thank you for staying with us. We hope to welcome you back soon.
+            </p>
+            <div className="mt-8">
+              <Link to="/rooms" className="btn btn-primary">Book Again</Link>
+            </div>
+          </div>
+        );
       default:
         return null;
     }
   };
+
+  const summaryBadge = bookingStatusBadge(booking.status);
 
   return (
     <main className="pt-32 pb-20 bg-light min-h-screen">
@@ -133,8 +196,11 @@ const BookingStatus = () => {
             <h3 className="m-0 text-[#1e293b] font-bold text-xl flex items-center gap-2">
               <span style={{ fontSize: '1.4rem' }}>✨</span> Booking Summary
             </h3>
-            <span className="bg-[#fef3c7] text-[#92400e] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-              {booking.status}
+            <span
+              className="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider"
+              style={{ backgroundColor: summaryBadge.bg, color: summaryBadge.color }}
+            >
+              {bookingStatusLabel(booking.status)}
             </span>
           </div>
           

@@ -36,8 +36,8 @@ api.interceptors.response.use(
 
 export const AppContext = createContext({
   rooms: [], setRooms: () => {}, updateRoom: () => {}, fetchRooms: async () => {}, loading: false, roomsError: null,
-  bookings: [], setBookings: () => {}, updateBookingStatus: () => {}, createBooking: async () => ({}), checkAvailability: async () => true, fetchBookings: async () => {},
-  payments: [], setPayments: () => {}, fetchPayments: async () => {}, confirmPayment: async () => ({}),
+  bookings: [], setBookings: () => {}, updateBookingStatus: () => {}, createBooking: async () => ({}), checkAvailability: async () => true, fetchBookings: async () => {}, deleteBooking: async () => {},
+  payments: [], setPayments: () => {}, fetchPayments: async () => {}, confirmPayment: async () => ({}), deletePayment: async () => {}, clearAllRecords: async () => ({}),
   paymentsLoading: false, paymentsError: null,
   users: [], setUsers: () => {},
   testimonials: [], addTestimonial: () => {},
@@ -110,30 +110,20 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // The database is the single source of truth for status. The old
+  // `bookingOverrides` / `paymentOverrides` localStorage maps were added
+  // because the admin PATCH looked like it "didn't persist" - it actually does
+  // (see the Edge Function), the errors were just being swallowed. Layering
+  // local state on top meant a genuinely failed update still looked applied,
+  // and a stale entry pinned a row to the wrong status on that device forever.
   const fetchBookings = async () => {
     try {
+      localStorage.removeItem('bookingOverrides');
       const { data } = await api.get('/bookings');
-      let bookingsData = Array.isArray(data) ? data : [];
-      
-      // Apply local status overrides
-      const overridesStr = localStorage.getItem('bookingOverrides');
-      if (overridesStr) {
-        try {
-          const overrides = JSON.parse(overridesStr);
-          bookingsData = bookingsData.map(b => {
-            if (overrides[b.id]) {
-              return { ...b, status: overrides[b.id] };
-            }
-            return b;
-          });
-        } catch (e) {
-          console.error('Error parsing local booking overrides', e);
-        }
-      }
-      
-      setBookings(bookingsData);
+      setBookings(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('fetchBookings:', err.message);
+      throw err;
     }
   };
 
@@ -141,26 +131,9 @@ export const AppProvider = ({ children }) => {
     setPaymentsLoading(true);
     setPaymentsError(null);
     try {
+      localStorage.removeItem('paymentOverrides');
       const { data } = await api.get('/payments');
-      let paymentsData = Array.isArray(data) ? data : [];
-      
-      // Apply local status overrides (client-side fallback when backend PATCH doesn't persist)
-      const overridesStr = localStorage.getItem('paymentOverrides');
-      if (overridesStr) {
-        try {
-          const overrides = JSON.parse(overridesStr);
-          paymentsData = paymentsData.map(p => {
-            if (overrides[p.id]) {
-              return { ...p, status: overrides[p.id] };
-            }
-            return p;
-          });
-        } catch (e) {
-          console.error('Error parsing local payment overrides', e);
-        }
-      }
-      
-      setPayments(paymentsData);
+      setPayments(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('fetchPayments:', err.message);
       setPaymentsError(err.message || 'Failed to load payment data.');
@@ -174,7 +147,7 @@ export const AppProvider = ({ children }) => {
     fetchRooms();
     // Also load admin data if a token already exists (page refresh)
     if (localStorage.getItem('token')) {
-      fetchBookings();
+      fetchBookings().catch(() => {});
       fetchPayments();
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -238,8 +211,10 @@ export const AppProvider = ({ children }) => {
         const { data } = await api.post('/bookings', bookingData);
         newBooking = data;
       }
-      await fetchBookings();
-      await fetchPayments();
+      // Both are admin-only endpoints; a guest booking from the public checkout
+      // gets a 401 here. The booking itself already succeeded, so a refresh
+      // failure must not be reported back as a booking failure.
+      await Promise.allSettled([fetchBookings(), fetchPayments()]);
       return { success: true, booking: newBooking };
     } catch (err) {
       return { success: false, message: err.response?.data?.message || 'Booking failed' };
@@ -247,58 +222,56 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateBookingStatus = async (id, status) => {
-    try {
-      await api.patch(`/bookings/${id}`, { status });
-    } catch (err) {
-      console.error('updateBookingStatus api error:', err.message);
-    } finally {
-      // Local fallback: save status to local storage
-      try {
-        const overridesStr = localStorage.getItem('bookingOverrides') || '{}';
-        const overrides = JSON.parse(overridesStr);
-        overrides[id] = status;
-        localStorage.setItem('bookingOverrides', JSON.stringify(overrides));
-      } catch(e) {}
-      await fetchBookings();
-    }
+    // Errors propagate so the admin UI can report what actually happened.
+    const { data } = await api.patch(`/bookings/${id}`, { status });
+    setBookings(prev => prev.map(b => (b.id === id ? { ...b, ...data, status } : b)));
+    await fetchBookings();
+    return data;
+  };
+
+  const deleteBooking = async (id) => {
+    await api.delete(`/bookings/${id}`);
+    setBookings(prev => prev.filter(b => b.id !== id));
+    await Promise.all([fetchBookings(), fetchPayments()]);
   };
 
   // ── Payments ─────────────────────────────────────────────
-  // Returns { success, apiPersisted } so the caller can show accurate feedback.
+  // Approve / reject a transaction. The Edge Function updates the payment, the
+  // booking and the room in one call, so all that is left here is to re-read
+  // server state. Errors are thrown, never swallowed: a row that still says
+  // "Pending" after this resolves really is still pending.
   const confirmPayment = async (id, status, adminNotes) => {
-    let apiPersisted = false;
-    try {
-      await api.patch(`/payments/${id}/confirm`, { status, adminNotes });
-      apiPersisted = true;
-    } catch (err) {
-      console.error('confirmPayment api error:', err.message);
-      // Do not rethrow — apply localStorage fallback below so UI stays responsive.
-    }
+    const { data } = await api.patch(`/payments/${id}/confirm`, { status, adminNotes });
 
-    // Always apply local fallback so the admin UI reflects the change immediately.
-    try {
-      const payment = payments.find(p => p.id === id);
-      if (payment) {
-        const bookingStatus = status === 'success' ? 'confirmed' : 'cancelled';
-        const bookingOverridesStr = localStorage.getItem('bookingOverrides') || '{}';
-        const bookingOverrides = JSON.parse(bookingOverridesStr);
-        bookingOverrides[payment.bookingId] = bookingStatus;
-        localStorage.setItem('bookingOverrides', JSON.stringify(bookingOverrides));
-      }
-      
-      // Save payment status to local fallback
-      const paymentOverridesStr = localStorage.getItem('paymentOverrides') || '{}';
-      const paymentOverrides = JSON.parse(paymentOverridesStr);
-      paymentOverrides[id] = status;
-      localStorage.setItem('paymentOverrides', JSON.stringify(paymentOverrides));
-    } catch (e) {
-      console.error('localStorage override error:', e);
-    }
+    // Paint the new status immediately so the badge flips on the same click,
+    // then reconcile with the server.
+    const bookingId = data?.payment?.bookingId ?? payments.find(p => p.id === id)?.bookingId;
+    const bookingStatus = status === 'success' ? 'confirmed' : 'cancelled';
+    setPayments(prev => prev.map(p => (p.id === id ? { ...p, ...(data?.payment || {}), status } : p)));
+    setBookings(prev => prev.map(b => (
+      b.id === bookingId ? { ...b, status: bookingStatus, paymentStatus: status } : b
+    )));
 
+    await Promise.all([fetchPayments(), fetchBookings(), fetchRooms(true)]);
+    return { success: true, apiPersisted: true, payment: data?.payment };
+  };
+
+  const deletePayment = async (id) => {
+    await api.delete(`/payments/${id}`);
+    setPayments(prev => prev.filter(p => p.id !== id));
     await fetchPayments();
-    await fetchBookings();
+  };
 
-    return { success: true, apiPersisted };
+  // Danger zone: wipes every booking, payment and guest account, and releases
+  // booked rooms. Backs the dashboard's "Clear All Records" action.
+  const clearAllRecords = async () => {
+    const { data } = await api.delete('/admin/records');
+    localStorage.removeItem('bookingOverrides');
+    localStorage.removeItem('paymentOverrides');
+    setBookings([]);
+    setPayments([]);
+    await Promise.all([fetchBookings(), fetchPayments(), fetchRooms(true)]);
+    return data;
   };
 
   // ── Testimonials (local only) ─────────────────────────────
@@ -311,8 +284,8 @@ export const AppProvider = ({ children }) => {
     <AppContext.Provider
       value={{
         rooms, setRooms, updateRoom, fetchRooms, loading, roomsError,
-        bookings, setBookings, updateBookingStatus, createBooking, checkAvailability, fetchBookings,
-        payments, setPayments, fetchPayments, confirmPayment,
+        bookings, setBookings, updateBookingStatus, createBooking, checkAvailability, fetchBookings, deleteBooking,
+        payments, setPayments, fetchPayments, confirmPayment, deletePayment, clearAllRecords,
         paymentsLoading, paymentsError,
         users, setUsers,
         testimonials, addTestimonial,

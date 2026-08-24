@@ -211,8 +211,56 @@
   background-color: var(--color-background-light);
 }
 
+/* Status pills. Only .badge-muted existed before, so every other status
+   (Approved, Pending, Rejected) rendered as plain unstyled text and was hard
+   to tell apart at a glance. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.badge-success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.badge-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.badge-danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.badge-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
 .badge-muted {
   background-color: #f1f5f9;
   color: #64748b;
   border: 1px solid #cbd5e1;
 }
+
+.stat-icon {
+  flex-shrink: 0;
+}
+
+.stat-icon.amber { background: #fef3c7; color: #b45309; }
+
+@keyframes admin-spin { to { transform: rotate(360deg); } }
+.spin { animation: admin-spin 0.9s linear infinite; }

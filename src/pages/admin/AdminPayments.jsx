@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { AppContext } from '../../context/AppContext';
-import { CreditCard, CheckCircle, XCircle, Eye, AlertTriangle, Clock, FileText, Search, RefreshCw } from 'lucide-react';
+import { CreditCard, CheckCircle, XCircle, Eye, AlertTriangle, Clock, FileText, Search, RefreshCw, Loader2 } from 'lucide-react';
+import { paymentStatusLabel, receiptUrlOf, isBookingClosed, naira } from '../../utils/status';
 import { subDays, startOfWeek, endOfWeek, subWeeks, startOfMonth, endOfMonth, subMonths, isWithinInterval, parseISO, format, isSameMonth, startOfDay, endOfDay } from 'date-fns';
 
 const AdminPayments = () => {
@@ -15,6 +16,8 @@ const AdminPayments = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [selectedDateDetails, setSelectedDateDetails] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [bulkRunning, setBulkRunning] = useState(false);
 
   useEffect(() => {
     fetchPayments();
@@ -26,7 +29,11 @@ const AdminPayments = () => {
     fetchBookings();
   };
 
-  const pendingPayments = payments.filter(p => p.status === 'pending' && p.receipt);
+  // Every pending transaction is actionable, with or without an uploaded
+  // receipt. This used to also require `p.receipt` - a field the API never
+  // returns (it sends `receiptUrl`) - so the review queue was always empty and
+  // approvals had to be hunted down in the log table below.
+  const pendingPayments = payments.filter(p => p.status === 'pending');
 
   const showToast = (type, msg) => {
     setToast({ type, msg });
@@ -40,31 +47,56 @@ const AdminPayments = () => {
   };
 
   const handleConfirm = async () => {
-    if (!actionPayment) return;
+    if (!actionPayment || submitting) return;
     const newStatus = actionType === 'approve' ? 'success' : 'failed';
+    const shortId = actionPayment.id.substring(0, 8);
 
-    const result = await confirmPayment(actionPayment.id, newStatus, adminNotes);
-
-    if (result?.apiPersisted) {
-      // Backend confirmed the change
+    setSubmitting(true);
+    try {
+      await confirmPayment(actionPayment.id, newStatus, adminNotes);
       showToast(
         actionType === 'approve' ? 'success' : 'error',
         actionType === 'approve'
-          ? `Payment #${actionPayment.id.substring(0,8)} approved. Booking confirmed.`
-          : `Payment #${actionPayment.id.substring(0,8)} rejected. Booking cancelled.`
+          ? `Payment #${shortId} approved - ${naira(actionPayment.amount)} cleared from outstanding.`
+          : `Payment #${shortId} rejected. Booking cancelled and room released.`
       );
-    } else {
-      // Backend failed but localStorage override is applied locally
-      showToast(
-        'warning',
-        actionType === 'approve'
-          ? `Payment approved locally (server sync pending). Status updated on this device.`
-          : `Payment rejected locally (server sync pending). Status updated on this device.`
-      );
+      setActionPayment(null);
+      setAdminNotes('');
+    } catch (err) {
+      // The dialog stays open on failure: the row really is still pending, and
+      // the admin needs the reason rather than a "saved on this device" toast.
+      showToast('error', err?.response?.data?.message || err.message || 'Could not update the payment. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
+  };
 
-    setActionPayment(null);
-    setAdminNotes('');
+  // Clears the whole pending queue in one pass, counting failures instead of
+  // silently leaving rows behind.
+  const handleApproveAll = async () => {
+    if (bulkRunning || pendingPayments.length === 0) return;
+    const queue = [...pendingPayments];
+    const total = queue.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+    if (!window.confirm(`Approve all ${queue.length} pending transaction(s) totalling ${naira(total)}?`)) return;
+
+    setBulkRunning(true);
+    let ok = 0;
+    const failures = [];
+    for (const p of queue) {
+      try {
+        await confirmPayment(p.id, 'success', 'Bulk approved from admin dashboard');
+        ok += 1;
+      } catch (err) {
+        failures.push(`#${p.id.substring(0, 8)}: ${err?.response?.data?.message || err.message}`);
+      }
+    }
+    setBulkRunning(false);
+    showToast(
+      failures.length ? 'error' : 'success',
+      failures.length
+        ? `${ok} approved, ${failures.length} failed - ${failures[0]}`
+        : `${ok} transaction(s) approved. Outstanding reduced by ${naira(total)}.`
+    );
   };
 
   const handleCancel = () => {
@@ -74,11 +106,12 @@ const AdminPayments = () => {
 
   const statusBadge = (status) => {
     const map = {
-      success: { cls: 'badge-success', icon: <CheckCircle size={12} />, label: 'Success' },
-      failed: { cls: 'badge-danger', icon: <XCircle size={12} />, label: 'Failed' },
+      success: { cls: 'badge-success', icon: <CheckCircle size={12} />, label: paymentStatusLabel('success') },
+      failed: { cls: 'badge-danger', icon: <XCircle size={12} />, label: paymentStatusLabel('failed') },
       pending: { cls: 'badge-warning', icon: <Clock size={12} />, label: 'Pending' },
-      completed: { cls: 'badge-success', icon: <CheckCircle size={12} />, label: 'Completed' },
-      paid: { cls: 'badge-success', icon: <CheckCircle size={12} />, label: 'Paid' },
+      refunded: { cls: 'badge-muted', icon: <XCircle size={12} />, label: 'Refunded' },
+      completed: { cls: 'badge-success', icon: <CheckCircle size={12} />, label: 'Approved' },
+      paid: { cls: 'badge-success', icon: <CheckCircle size={12} />, label: 'Approved' },
       cancelled: { cls: 'badge-danger', icon: <XCircle size={12} />, label: 'Cancelled' },
     };
     const s = map[status] || { cls: 'badge-warning', icon: <Clock size={12} />, label: status || 'Pending' };
@@ -89,9 +122,9 @@ const AdminPayments = () => {
     );
   };
 
-  const getReceiptUrl = (receipt) => {
-    return typeof receipt === 'string' ? receipt : receipt?.url;
-  };
+  // Reads `receiptUrl` (what the API actually sends) and still tolerates the
+  // older `receipt` string/object shape.
+  const getReceiptUrl = (payment) => receiptUrlOf(payment);
 
   // --- ANALYTICS CALCULATIONS ---
   // 1. Core effective arrays (payments already have paymentOverrides applied by AppContext)
@@ -155,8 +188,10 @@ const AdminPayments = () => {
 
   // OUTSTANDING: Per-booking, max(bookingTotal - paidForBooking, 0). Then sum.
   // This prevents double-counting when a booking has multiple payment records.
+  // Cancelled and checked-out bookings are settled - counting their totals kept
+  // money on the Outstanding card that nobody actually owes.
   let calculatedOutstanding = 0;
-  (bookings || []).forEach(booking => {
+  (bookings || []).filter(b => !isBookingClosed(b.status)).forEach(booking => {
     const paidForBooking = successfulPayments
       .filter(p => p.bookingId === booking.id)
       .reduce((sum, p) => sum + Number(p.amount || 0), 0);
@@ -364,18 +399,34 @@ const AdminPayments = () => {
       {/* ===== PENDING PAYMENTS SECTION ===== */}
       {pendingPayments.length > 0 && (
         <div className="admin-table-container" style={{ border: '2px solid #f59e0b' }}>
-          <div style={{ padding: '1.5rem', borderBottom: '1px solid #fef3c7', background: '#fffbeb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ padding: '1.5rem', borderBottom: '1px solid #fef3c7', background: '#fffbeb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <AlertTriangle size={20} color="#f59e0b" />
               <h3 style={{ margin: 0, color: '#92400e' }}>Pending Payment Reviews</h3>
             </div>
-            <span className="badge badge-warning">{pendingPayments.length} Awaiting Review</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <span className="badge badge-warning">
+                {pendingPayments.length} Awaiting Review &middot; {naira(pendingPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0))}
+              </span>
+              <button
+                onClick={handleApproveAll}
+                disabled={bulkRunning}
+                style={{
+                  background: bulkRunning ? '#94a3b8' : '#10b981', color: '#fff', border: 'none',
+                  borderRadius: '8px', padding: '0.5rem 1rem', fontWeight: 700, fontSize: '0.78rem',
+                  cursor: bulkRunning ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem'
+                }}
+              >
+                {bulkRunning ? <Loader2 size={14} className="spin" /> : <CheckCircle size={14} />}
+                {bulkRunning ? 'Approving...' : 'Approve All'}
+              </button>
+            </div>
           </div>
 
           <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {pendingPayments.map(payment => {
               const booking = bookings.find(b => b.id === payment.bookingId);
-              const receiptUrl = getReceiptUrl(payment.receipt);
+              const receiptUrl = getReceiptUrl(payment);
               return (
                 <div key={payment.id} style={{
                   background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px',
@@ -395,6 +446,14 @@ const AdminPayments = () => {
                       <span>📅 {new Date(payment.createdAt).toLocaleDateString()}</span>
                       <span style={{color: 'var(--color-primary-navy)', fontWeight: 600}}>🎫 Code: <span style={{fontFamily: 'monospace', letterSpacing: '1px'}}>{booking?.confirmationCode || 'N/A'}</span></span>
                     </div>
+                    {!receiptUrl && (
+                      <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <FileText size={14} color="#94a3b8" />
+                        <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                          No receipt uploaded ({payment.method || 'unknown method'})
+                        </span>
+                      </div>
+                    )}
                     {receiptUrl && (
                       <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <FileText size={14} color="#64748b" />
@@ -730,20 +789,26 @@ const AdminPayments = () => {
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button
                 onClick={handleCancel}
-                style={{ flex: 1, padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#f8fafc', color: '#64748b', fontWeight: 600, cursor: 'pointer', fontSize: '0.875rem' }}
+                disabled={submitting}
+                style={{ flex: 1, padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#f8fafc', color: '#64748b', fontWeight: 600, cursor: submitting ? 'not-allowed' : 'pointer', fontSize: '0.875rem' }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirm}
+                disabled={submitting}
                 style={{
                   flex: 2, padding: '0.75rem', border: 'none', borderRadius: '8px',
-                  background: actionType === 'approve' ? '#10b981' : '#ef4444',
-                  color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '0.875rem',
+                  background: submitting ? '#94a3b8' : (actionType === 'approve' ? '#10b981' : '#ef4444'),
+                  color: '#fff', fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', fontSize: '0.875rem',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
                 }}
               >
-                {actionType === 'approve' ? <><CheckCircle size={16} /> Confirm Approval</> : <><XCircle size={16} /> Confirm Rejection</>}
+                {submitting
+                  ? <><Loader2 size={16} className="spin" /> Working...</>
+                  : actionType === 'approve'
+                    ? <><CheckCircle size={16} /> Confirm Approval</>
+                    : <><XCircle size={16} /> Confirm Rejection</>}
               </button>
             </div>
           </div>

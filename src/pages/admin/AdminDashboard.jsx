@@ -1,36 +1,89 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { AppContext } from '../../context/AppContext';
-import { Calendar, DollarSign, BedDouble, AlertCircle, Clock } from 'lucide-react';
+import {
+  Calendar, DollarSign, BedDouble, Clock, Wallet,
+  Trash2, AlertTriangle, CheckCircle, XCircle, Loader2,
+} from 'lucide-react';
+import {
+  BOOKING_STATUS,
+  normalizeBookingStatus,
+  bookingStatusLabel,
+  bookingStatusBadge,
+  naira,
+} from '../../utils/status';
 
 const AdminDashboard = () => {
-  const { bookings, rooms, payments } = useContext(AppContext);
+  const { bookings, rooms, payments, fetchBookings, fetchPayments, clearAllRecords } = useContext(AppContext);
+  const [clearOpen, setClearOpen] = useState(false);
+  const [clearPhrase, setClearPhrase] = useState('');
+  const [clearing, setClearing] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    fetchBookings().catch(() => {});
+    fetchPayments();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const showToast = (type, msg) => {
+    setToast({ type, msg });
+    setTimeout(() => setToast(null), 6000);
+  };
 
   const totalBookings = bookings.length;
 
-  // Revenue = sum of ONLY successfully paid payment amounts.
-  // Previously used sum of all booking totals (including pending/cancelled) — incorrect.
-  const totalRevenue = payments
+  // Money is tracked off the payment ledger, not off booking totals, so that
+  // approving a transaction visibly moves the amount out of Outstanding and
+  // into Received on the very next render.
+  const outstanding = payments
+    .filter(p => p.status === 'pending')
+    .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  const received = payments
     .filter(p => p.status === 'success')
-    .reduce((acc, p) => acc + Number(p.amount || 0), 0);
+    .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  const pendingCount = payments.filter(p => p.status === 'pending').length;
 
   const availableRooms = rooms.filter(r => r.status === 'available').length;
+  const pendingBookings = bookings.filter(
+    b => normalizeBookingStatus(b.status) === BOOKING_STATUS.PENDING,
+  ).length;
 
-  const pendingBookings = bookings.filter(b => b.status === 'pending').length;
+  // The API already returns newest-first.
+  const recentBookings = bookings.slice(0, 10);
 
-  const recentBookings = bookings.slice().reverse().slice(0, 10);
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'confirmed': return { bg: '#d1fae5', color: '#065f46' };
-      case 'checked-in': return { bg: '#dbeafe', color: '#1e40af' };
-      case 'checked-out': return { bg: '#f1f5f9', color: '#475569' };
-      case 'cancelled': return { bg: '#fee2e2', color: '#991b1b' };
-      default: return { bg: '#fef3c7', color: '#92400e' }; // pending
+  const handleClear = async () => {
+    if (clearPhrase.trim().toUpperCase() !== 'CLEAR' || clearing) return;
+    setClearing(true);
+    try {
+      const result = await clearAllRecords();
+      const d = result?.deleted || {};
+      showToast(
+        'success',
+        `Cleared ${d.bookings ?? 0} booking(s), ${d.payments ?? 0} transaction(s) and ${d.guests ?? 0} guest account(s). ${result?.roomsReleased ?? 0} room(s) released.`,
+      );
+      setClearOpen(false);
+      setClearPhrase('');
+    } catch (err) {
+      showToast('error', err?.response?.data?.message || err.message || 'Could not clear the records.');
+    } finally {
+      setClearing(false);
     }
   };
 
   return (
     <div>
+      {toast && (
+        <div style={{
+          position: 'fixed', top: '1.5rem', right: '1.5rem', zIndex: 9999,
+          background: toast.type === 'success' ? '#10b981' : '#ef4444',
+          color: '#fff', padding: '1rem 1.5rem', borderRadius: '12px',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center',
+          gap: '0.75rem', fontWeight: 600, fontSize: '0.9rem', maxWidth: '400px'
+        }}>
+          {toast.type === 'success' ? <CheckCircle size={20} /> : <XCircle size={20} />}
+          {toast.msg}
+        </div>
+      )}
+
       {/* STATS */}
       <div className="dashboard-grid">
         <div className="stat-card">
@@ -42,15 +95,26 @@ const AdminDashboard = () => {
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon gold"><DollarSign /></div>
+          <div className="stat-icon green"><DollarSign /></div>
           <div className="stat-details">
-            <h4>Total Revenue</h4>
-            <p>₦{totalRevenue.toLocaleString()}</p>
+            <h4>Received</h4>
+            <p>{naira(received)}</p>
           </div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon green"><BedDouble /></div>
+          <div className="stat-icon amber"><Wallet /></div>
+          <div className="stat-details">
+            <h4>Outstanding</h4>
+            <p>{naira(outstanding)}</p>
+            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+              {pendingCount} transaction{pendingCount === 1 ? '' : 's'} awaiting approval
+            </span>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon gold"><BedDouble /></div>
           <div className="stat-details">
             <h4>Available Rooms</h4>
             <p>{availableRooms} / {rooms.length}</p>
@@ -91,8 +155,8 @@ const AdminDashboard = () => {
             <tbody>
               {recentBookings.length > 0 ? (
                 recentBookings.map((booking) => {
-                  const room = rooms.find(r => r.id === booking.roomId);
-                  const badge = getStatusBadge(booking.status);
+                  const room = booking.room || rooms.find(r => r.id === booking.roomId);
+                  const badge = bookingStatusBadge(booking.status);
                   return (
                     <tr key={booking.id}>
                       <td style={{ fontSize: '0.8rem', color: '#64748b' }}>
@@ -105,7 +169,7 @@ const AdminDashboard = () => {
                       <td>{room?.name || booking.roomName || 'N/A'}</td>
                       <td>{booking.checkIn ? new Date(booking.checkIn).toLocaleDateString() : 'N/A'}</td>
                       <td>{booking.checkOut ? new Date(booking.checkOut).toLocaleDateString() : 'N/A'}</td>
-                      <td style={{ fontWeight: 600 }}>₦{(booking.totalAmount || booking.totalPrice || 0).toLocaleString()}</td>
+                      <td style={{ fontWeight: 600 }}>{naira(booking.totalAmount || booking.totalPrice)}</td>
                       <td>
                         <span style={{
                           display: 'inline-block',
@@ -115,9 +179,8 @@ const AdminDashboard = () => {
                           fontWeight: 700,
                           backgroundColor: badge.bg,
                           color: badge.color,
-                          textTransform: 'capitalize'
                         }}>
-                          {booking.status || 'pending'}
+                          {bookingStatusLabel(booking.status)}
                         </span>
                       </td>
                     </tr>
@@ -133,6 +196,69 @@ const AdminDashboard = () => {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* DANGER ZONE */}
+      <div style={{
+        marginTop: '2rem', border: '2px solid #fecaca', borderRadius: '14px',
+        background: '#fef2f2', padding: '1.5rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
+          <AlertTriangle size={20} color="#dc2626" />
+          <h3 style={{ margin: 0, color: '#991b1b' }}>Danger Zone</h3>
+        </div>
+        <p style={{ color: '#7f1d1d', fontSize: '0.875rem', margin: '0 0 1rem', maxWidth: '640px' }}>
+          Permanently deletes every booking, every payment transaction and the guest accounts
+          created by them, then releases all booked rooms back to available. Your rooms, prices,
+          images and admin account are untouched. This cannot be undone.
+        </p>
+
+        {!clearOpen ? (
+          <button
+            onClick={() => setClearOpen(true)}
+            style={{
+              background: '#dc2626', color: '#fff', border: 'none', borderRadius: '8px',
+              padding: '0.6rem 1.2rem', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '0.5rem'
+            }}
+          >
+            <Trash2 size={16} /> Clear All Records
+          </button>
+        ) : (
+          <div style={{ background: '#fff', border: '1px solid #fecaca', borderRadius: '10px', padding: '1rem', maxWidth: '460px' }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#7f1d1d', marginBottom: '0.5rem' }}>
+              Type <strong>CLEAR</strong> to confirm deleting {bookings.length} booking(s) and {payments.length} transaction(s):
+            </label>
+            <input
+              value={clearPhrase}
+              onChange={e => setClearPhrase(e.target.value)}
+              placeholder="CLEAR"
+              style={{ width: '100%', padding: '0.6rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', marginBottom: '0.75rem' }}
+            />
+            <div style={{ display: 'flex', gap: '0.6rem' }}>
+              <button
+                onClick={() => { setClearOpen(false); setClearPhrase(''); }}
+                disabled={clearing}
+                style={{ flex: 1, padding: '0.6rem', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#f8fafc', color: '#64748b', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClear}
+                disabled={clearing || clearPhrase.trim().toUpperCase() !== 'CLEAR'}
+                style={{
+                  flex: 2, padding: '0.6rem', border: 'none', borderRadius: '8px',
+                  background: (clearing || clearPhrase.trim().toUpperCase() !== 'CLEAR') ? '#fca5a5' : '#dc2626',
+                  color: '#fff', fontWeight: 700,
+                  cursor: (clearing || clearPhrase.trim().toUpperCase() !== 'CLEAR') ? 'not-allowed' : 'pointer',
+                  fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                }}
+              >
+                {clearing ? <><Loader2 size={16} className="spin" /> Clearing...</> : <><Trash2 size={16} /> Delete Everything</>}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
