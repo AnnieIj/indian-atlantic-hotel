@@ -16,7 +16,9 @@ const AdminDashboard = () => {
   const { bookings, rooms, payments, fetchBookings, fetchPayments, clearAllRecords } = useContext(AppContext);
   const [clearOpen, setClearOpen] = useState(false);
   const [clearPhrase, setClearPhrase] = useState('');
+  const [clearPasscode, setClearPasscode] = useState('');
   const [clearing, setClearing] = useState(false);
+  const [clearProgress, setClearProgress] = useState(null); // { done, total }
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -50,22 +52,58 @@ const AdminDashboard = () => {
   // The API already returns newest-first.
   const recentBookings = bookings.slice(0, 10);
 
+  // A mis-click guard, not a security boundary: the endpoint itself is gated by
+  // the admin JWT. Anyone who can read the JS bundle can read this value, so do
+  // not treat it as a secret.
+  const CLEAR_PASSCODE = '3696';
+
+  const phraseOk = clearPhrase.trim().toUpperCase() === 'CLEAR';
+  const passcodeOk = clearPasscode.trim() === CLEAR_PASSCODE;
+  const canClear = phraseOk && passcodeOk && !clearing;
+
+  const resetClearForm = () => {
+    setClearOpen(false);
+    setClearPhrase('');
+    setClearPasscode('');
+    setClearProgress(null);
+  };
+
   const handleClear = async () => {
-    if (clearPhrase.trim().toUpperCase() !== 'CLEAR' || clearing) return;
+    if (clearing) return;
+    if (!phraseOk) {
+      showToast('error', 'Type CLEAR in the confirmation box first.');
+      return;
+    }
+    if (!passcodeOk) {
+      showToast('error', 'Incorrect passcode.');
+      return;
+    }
+
     setClearing(true);
+    setClearProgress(null);
     try {
-      const result = await clearAllRecords();
+      const result = await clearAllRecords(CLEAR_PASSCODE, (done, total) => {
+        setClearProgress({ done, total });
+      });
       const d = result?.deleted || {};
       showToast(
-        'success',
-        `Cleared ${d.bookings ?? 0} booking(s), ${d.payments ?? 0} transaction(s) and ${d.guests ?? 0} guest account(s). ${result?.roomsReleased ?? 0} room(s) released.`,
+        result?.partial ? 'error' : 'success',
+        result?.partial
+          ? result.message
+          : `Cleared ${d.bookings ?? 0} booking(s) and ${d.payments ?? 0} transaction(s). ${result?.roomsReleased ?? 0} room(s) released.`,
       );
-      setClearOpen(false);
-      setClearPhrase('');
+      resetClearForm();
     } catch (err) {
-      showToast('error', err?.response?.data?.message || err.message || 'Could not clear the records.');
+      const status = err?.response?.status;
+      showToast(
+        'error',
+        status === 401 || status === 403
+          ? 'Your admin session expired. Sign in again and retry.'
+          : err?.response?.data?.message || err.message || 'Could not clear the records.',
+      );
     } finally {
       setClearing(false);
+      setClearProgress(null);
     }
   };
 
@@ -227,30 +265,63 @@ const AdminDashboard = () => {
         ) : (
           <div style={{ background: '#fff', border: '1px solid #fecaca', borderRadius: '10px', padding: '1rem', maxWidth: '460px' }}>
             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#7f1d1d', marginBottom: '0.5rem' }}>
-              Type <strong>CLEAR</strong> to confirm deleting {bookings.length} booking(s) and {payments.length} transaction(s):
+              1. Type <strong>CLEAR</strong> to confirm deleting {bookings.length} booking(s) and {payments.length} transaction(s):
             </label>
             <input
               value={clearPhrase}
               onChange={e => setClearPhrase(e.target.value)}
               placeholder="CLEAR"
-              style={{ width: '100%', padding: '0.6rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', marginBottom: '0.75rem' }}
+              disabled={clearing}
+              style={{ width: '100%', padding: '0.6rem 0.75rem', border: `1px solid ${clearPhrase && !phraseOk ? '#fca5a5' : '#e2e8f0'}`, borderRadius: '8px', outline: 'none', fontSize: '0.9rem', marginBottom: '0.9rem' }}
             />
-            <div style={{ display: 'flex', gap: '0.6rem' }}>
+
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#7f1d1d', marginBottom: '0.5rem' }}>
+              2. Enter the admin passcode:
+            </label>
+            <input
+              value={clearPasscode}
+              onChange={e => setClearPasscode(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && canClear) handleClear(); }}
+              type="password"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="Passcode"
+              disabled={clearing}
+              style={{ width: '100%', padding: '0.6rem 0.75rem', border: `1px solid ${clearPasscode && !passcodeOk ? '#fca5a5' : '#e2e8f0'}`, borderRadius: '8px', outline: 'none', fontSize: '0.9rem', marginBottom: '0.4rem', letterSpacing: '3px' }}
+            />
+            {clearPasscode && !passcodeOk && (
+              <div style={{ fontSize: '0.78rem', color: '#dc2626', marginBottom: '0.5rem' }}>Incorrect passcode.</div>
+            )}
+
+            {clearProgress && (
+              <div style={{ fontSize: '0.8rem', color: '#7f1d1d', margin: '0.5rem 0 0.75rem' }}>
+                Deleting {clearProgress.done} of {clearProgress.total}...
+                <div style={{ height: '6px', background: '#fee2e2', borderRadius: '999px', marginTop: '0.35rem', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${clearProgress.total ? (clearProgress.done / clearProgress.total) * 100 : 0}%`,
+                    background: '#dc2626', transition: 'width 0.2s ease'
+                  }} />
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.75rem' }}>
               <button
-                onClick={() => { setClearOpen(false); setClearPhrase(''); }}
+                onClick={resetClearForm}
                 disabled={clearing}
-                style={{ flex: 1, padding: '0.6rem', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#f8fafc', color: '#64748b', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}
+                style={{ flex: 1, padding: '0.6rem', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#f8fafc', color: '#64748b', fontWeight: 600, cursor: clearing ? 'not-allowed' : 'pointer', fontSize: '0.85rem' }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleClear}
-                disabled={clearing || clearPhrase.trim().toUpperCase() !== 'CLEAR'}
+                disabled={!canClear}
                 style={{
                   flex: 2, padding: '0.6rem', border: 'none', borderRadius: '8px',
-                  background: (clearing || clearPhrase.trim().toUpperCase() !== 'CLEAR') ? '#fca5a5' : '#dc2626',
+                  background: canClear ? '#dc2626' : '#fca5a5',
                   color: '#fff', fontWeight: 700,
-                  cursor: (clearing || clearPhrase.trim().toUpperCase() !== 'CLEAR') ? 'not-allowed' : 'pointer',
+                  cursor: canClear ? 'pointer' : 'not-allowed',
                   fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
                 }}
               >

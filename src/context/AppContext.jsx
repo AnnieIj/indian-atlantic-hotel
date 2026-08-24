@@ -264,14 +264,64 @@ export const AppProvider = ({ children }) => {
 
   // Danger zone: wipes every booking, payment and guest account, and releases
   // booked rooms. Backs the dashboard's "Clear All Records" action.
-  const clearAllRecords = async () => {
-    const { data } = await api.delete('/admin/records');
-    localStorage.removeItem('bookingOverrides');
-    localStorage.removeItem('paymentOverrides');
-    setBookings([]);
-    setPayments([]);
-    await Promise.all([fetchBookings(), fetchPayments(), fetchRooms(true)]);
-    return data;
+  //
+  // Prefers the single-shot DELETE /admin/records endpoint. That route only
+  // exists in a redeployed Edge Function, so when it 404s we fall back to
+  // deleting each booking through DELETE /bookings/:id, which has always been
+  // deployed. Payments cascade with their booking (FK is ON DELETE CASCADE) and
+  // that route already frees the room, so the end state matches - it just costs
+  // one request per booking.
+  const clearAllRecords = async (passcode, onProgress) => {
+    const finish = async (result) => {
+      localStorage.removeItem('bookingOverrides');
+      localStorage.removeItem('paymentOverrides');
+      setBookings([]);
+      setPayments([]);
+      await Promise.all([fetchBookings(), fetchPayments(), fetchRooms(true)]);
+      return result;
+    };
+
+    try {
+      const { data } = await api.delete('/admin/records', { data: { passcode } });
+      return await finish(data);
+    } catch (err) {
+      if (err?.response?.status !== 404) throw err;
+      console.warn('clearAllRecords: /admin/records not deployed, deleting per booking');
+    }
+
+    const { data: current } = await api.get('/bookings');
+    const list = Array.isArray(current) ? current : [];
+    let done = 0;
+    const failures = [];
+
+    // Small concurrency window: fast enough for a few hundred rows without
+    // hammering the function with hundreds of simultaneous requests.
+    const WINDOW = 6;
+    for (let i = 0; i < list.length; i += WINDOW) {
+      const batch = list.slice(i, i + WINDOW);
+      const results = await Promise.allSettled(
+        batch.map(b => api.delete(`/bookings/${b.id}`)),
+      );
+      results.forEach((r, idx) => {
+        if (r.status === 'fulfilled') done += 1;
+        else failures.push(batch[idx].id);
+      });
+      if (onProgress) onProgress(Math.min(i + WINDOW, list.length), list.length);
+    }
+
+    if (failures.length && done === 0) {
+      throw new Error(`Could not delete any of the ${list.length} bookings.`);
+    }
+
+    return await finish({
+      message: failures.length
+        ? `Cleared ${done} of ${list.length} bookings; ${failures.length} could not be deleted.`
+        : 'All booking and payment records cleared',
+      deleted: { bookings: done, payments: done, guests: 0 },
+      roomsReleased: done,
+      partial: failures.length > 0,
+      viaFallback: true,
+    });
   };
 
   // ── Testimonials (local only) ─────────────────────────────
