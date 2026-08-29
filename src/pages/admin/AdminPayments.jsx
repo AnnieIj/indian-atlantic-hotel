@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { AppContext } from '../../context/AppContext';
 import { CreditCard, CheckCircle, XCircle, Eye, AlertTriangle, Clock, FileText, Search, RefreshCw, Loader2 } from 'lucide-react';
 import { paymentStatusLabel, receiptUrlOf, isBookingClosed, naira } from '../../utils/status';
+import { isPlaceholderEmail } from '../../utils/guest';
 import { subDays, startOfWeek, endOfWeek, subWeeks, startOfMonth, endOfMonth, subMonths, isWithinInterval, parseISO, format, isSameMonth, startOfDay, endOfDay } from 'date-fns';
 
 const AdminPayments = () => {
@@ -141,8 +142,9 @@ const AdminPayments = () => {
   const getCustomerId = (p) => {
     const b = bookings.find(bk => bk.id === p.bookingId);
     const email = b?.guestEmail || p.guestEmail;
-    // Only use email if it is a non-empty, non-whitespace string
-    if (email && email.trim()) return email.trim().toLowerCase();
+    // Placeholder addresses are minted per booking, so they identify a booking
+    // rather than a person - fall through to the booking id for those.
+    if (email && email.trim() && !isPlaceholderEmail(email)) return email.trim().toLowerCase();
     // Fall back to the booking ID (unique per booking, not per customer, but
     // better than grouping all email-less guests together)
     return p.bookingId || p.id;

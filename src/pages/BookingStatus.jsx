@@ -285,7 +285,7 @@ const BookingStatus = () => {
             
             <div className="mt-8 pt-6 border-t border-dashed border-gray-200 text-center">
               <p className="text-sm text-[#64748b] italic">
-                A copy of these details has been sent to your email.
+                Please save or screenshot these details - especially your confirmation code.
               </p>
             </div>
           </div>

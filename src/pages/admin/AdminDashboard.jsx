@@ -11,6 +11,7 @@ import {
   bookingStatusBadge,
   naira,
 } from '../../utils/status';
+import { displayGuestEmail } from '../../utils/guest';
 
 const AdminDashboard = () => {
   const { bookings, rooms, payments, fetchBookings, fetchPayments, clearAllRecords } = useContext(AppContext);
@@ -202,7 +203,9 @@ const AdminDashboard = () => {
                       </td>
                       <td>
                         <div style={{ fontWeight: 500 }}>{booking.guestName || 'Guest'}</div>
-                        <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{booking.guestEmail}</div>
+                        <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                          {displayGuestEmail(booking.guestEmail) || booking.guestPhone || ''}
+                        </div>
                       </td>
                       <td>{room?.name || booking.roomName || 'N/A'}</td>
                       <td>{booking.checkIn ? new Date(booking.checkIn).toLocaleDateString() : 'N/A'}</td>

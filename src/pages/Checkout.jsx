@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
+import { makePlaceholderEmail } from '../utils/guest';
 import { differenceInDays } from 'date-fns';
 import { CheckCircle } from 'lucide-react';
 import './Checkout.css';
@@ -21,7 +22,6 @@ const Checkout = () => {
     customTitle: '',
     firstName: '',
     lastName: '',
-    email: '',
     phone: '',
     dobMonth: '',
     dobDay: ''
@@ -87,7 +87,9 @@ const Checkout = () => {
       checkIn,
       checkOut,
       guestName: `${formData.title === 'Others' ? formData.customTitle : formData.title ? formData.title : ''}${(formData.title === 'Others' ? formData.customTitle : formData.title) ? ' ' : ''}${formData.firstName} ${formData.lastName}`.trim(),
-      guestEmail: formData.email,
+      // Guests no longer supply an email; the API still requires one, so mint a
+      // unique unroutable placeholder. See src/utils/guest.js.
+      guestEmail: makePlaceholderEmail(),
       guestPhone: formData.phone,
       paymentMethod,
       ...(formData.title ? { guestTitle: formData.title === 'Others' ? formData.customTitle : formData.title } : {}),
@@ -189,21 +191,6 @@ const Checkout = () => {
                 <label>Last Name</label>
                 <input type="text" required value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} />
               </div>
-            </div>
-            <div className="form-group-light">
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                Email Address
-                <span style={{
-                  fontSize: '0.72rem',
-                  fontWeight: 600,
-                  background: 'var(--color-primary-gold, #c9a84c)',
-                  color: '#fff',
-                  borderRadius: '999px',
-                  padding: '1px 8px',
-                  letterSpacing: '0.04em'
-                }}>Optional</span>
-              </label>
-              <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="guest@example.com" />
             </div>
             <div className="form-group-light">
               <label>Phone Number</label>
@@ -386,7 +373,7 @@ const Checkout = () => {
                   <h4>Pay on Arrival – Cash Payment</h4>
                   <p>Your room will be held for you. Please bring the exact amount in cash when you check in.</p>
                   <p><strong>Amount due on arrival: ₦{total.toLocaleString()}</strong></p>
-                  <p style={{fontSize:'0.85rem', color:'#64748b'}}>A 6-digit check-in code will be sent to your email immediately after booking. Show it at reception.</p>
+                  <p style={{fontSize:'0.85rem', color:'#64748b'}}>A 6-digit check-in code is shown on the next screen immediately after booking. Save it and show it at reception.</p>
                 </div>
               )}
 

@@ -9,6 +9,7 @@ import {
   receiptUrlOf,
   naira,
 } from '../../utils/status';
+import { displayGuestEmail } from '../../utils/guest';
 
 const AdminBookings = () => {
   const { bookings, rooms, updateBookingStatus, fetchBookings } = useContext(AppContext);
@@ -44,7 +45,8 @@ const AdminBookings = () => {
     const room = rooms.find(r => r.id === b.roomId);
     const haystack = [
       b.guestName,
-      b.guestEmail,
+      displayGuestEmail(b.guestEmail),
+      b.guestPhone,
       b.id,
       b.confirmationCode,
       room?.name,
@@ -112,7 +114,9 @@ const AdminBookings = () => {
                     <td style={{fontSize: '0.8rem', color: '#64748b'}}>#{booking.id.substring(0, 8)}</td>
                     <td>
                       <div style={{fontWeight: 500}}>{booking.guestName || 'Guest'}</div>
-                      <div style={{fontSize: '0.8rem', color: '#64748b'}}>{booking.guestEmail}</div>
+                      <div style={{fontSize: '0.8rem', color: '#64748b'}}>
+                        {displayGuestEmail(booking.guestEmail) || booking.guestPhone || ''}
+                      </div>
                     </td>
                     <td>{room?.name || booking.roomId}</td>
                     <td>
